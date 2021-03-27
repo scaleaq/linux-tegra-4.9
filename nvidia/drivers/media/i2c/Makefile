@@ -21,3 +21,7 @@ obj-$(CONFIG_VIDEO_LT6911UXC) +=lt6911uxc.o
 obj-$(CONFIG_I2C_IOEXPANDER_SER_MAX9295) += max9295.o
 obj-$(CONFIG_I2C_IOEXPANDER_DESER_MAX9296) += max9296.o
 obj-$(CONFIG_VIDEO_IMX390) += imx390.o
+obj-$(CONFIG_FRAMOS_COMMON) += framos_common.o
+framos_common-objs := framos_sensor_common.o ./../../i2c/framos_i2c_generic.o
+obj-$(CONFIG_VIDEO_IMX482) += imx482.o
+obj-$(CONFIG_VIDEO_IMX485) += imx485.o

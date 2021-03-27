@@ -52,8 +52,55 @@ static const u32 tegracam_override_cids[] = {
 	TEGRA_CAMERA_CID_GAIN,
 	TEGRA_CAMERA_CID_EXPOSURE,
 	TEGRA_CAMERA_CID_FRAME_RATE,
+	TEGRA_CAMERA_CID_FPGA_FIRMWARE_PROPERTIES,
 };
 #define NUM_OVERRIDE_CTRLS ARRAY_SIZE(tegracam_override_cids)
+
+static const char * const is_common_stream_mode[] = {
+	[0] = "Standalone",
+	[1] = "Sync Mode",
+	[2] = "External HW Sync Mode",
+};
+
+static const char * const is_common_operation_mode[] = {
+	[0] = "Master Mode",
+	[1] = "Slave Mode",
+};
+
+static const char * const is_common_sync_function[] = {
+	[0] = "Internal Sync",
+	[1] = "External Sync",
+};
+
+static const char * const is_common_i2c_broadcast[] = {
+	[0] = "Unicast",
+	[1] = "Broadcast",
+};
+
+static const char * const is_common_verify_fw_menu[] = {
+	[0] = "Check",
+	[1] = "FW OK",
+	[2] = "FW ERROR",
+};
+
+static const char * const is_common_flip_mirror[] = {
+	[0] = "No Flip/Mirror",
+	[1] = "Vertical Flip",
+	[2] = "Horizontal Mirror",
+	[3] = "Vertical + Horizontal Flip/Mirror",
+};
+
+static const char * const is_global_shutter_mode[] = {
+	[0] = "Normal Mode",
+	[1] = "Sequential Trigger Mode",
+};
+
+static const char * const timing_generator_mode[] = {
+	[0] = "Disabled",
+	[1] = "Master Mode",
+	[2] = "Slave Mode",
+	[3] = "Trigger Mode",
+};
 
 static struct v4l2_ctrl_config ctrl_cfg_list[] = {
 /* Do not change the name field for the controls! */
@@ -73,7 +120,7 @@ static struct v4l2_ctrl_config ctrl_cfg_list[] = {
 		.id = TEGRA_CAMERA_CID_EXPOSURE,
 		.name = "Exposure",
 		.type = V4L2_CTRL_TYPE_INTEGER64,
-		.flags = V4L2_CTRL_FLAG_SLIDER,
+		.flags = V4L2_CTRL_FLAG_SLIDER | V4L2_CTRL_FLAG_UPDATE,
 		.min = CTRL_U64_MIN,
 		.max = CTRL_U64_MAX,
 		.def = CTRL_U64_MIN,
@@ -95,7 +142,7 @@ static struct v4l2_ctrl_config ctrl_cfg_list[] = {
 		.id = TEGRA_CAMERA_CID_FRAME_RATE,
 		.name = "Frame Rate",
 		.type = V4L2_CTRL_TYPE_INTEGER64,
-		.flags = V4L2_CTRL_FLAG_SLIDER,
+		.flags = V4L2_CTRL_FLAG_SLIDER | V4L2_CTRL_FLAG_UPDATE,
 		.min = CTRL_U64_MIN,
 		.max = CTRL_U64_MAX,
 		.def = CTRL_U64_MIN,
@@ -173,6 +220,130 @@ static struct v4l2_ctrl_config ctrl_cfg_list[] = {
 		.min = 0,
 		.max = STEREO_EEPROM_SIZE,
 		.step = 2,
+	},
+	{
+		.ops = &tegracam_ctrl_ops,
+		.id = TEGRA_CAMERA_CID_STREAMING_MODE,
+		.name = "Streaming Mode",
+		.type = V4L2_CTRL_TYPE_MENU,
+		.min = 0,
+		.max = ARRAY_SIZE(is_common_stream_mode) -1,
+		.def = 0,
+		.qmenu = is_common_stream_mode,
+	},
+	{
+		.ops = &tegracam_ctrl_ops,
+		.id = TEGRA_CAMERA_CID_OPERATION_MODE,
+		.name = "Operation Mode",
+		.type = V4L2_CTRL_TYPE_MENU,
+		.min = 0,
+		.max = ARRAY_SIZE(is_common_operation_mode) -1,
+		.def = 0,
+		.qmenu = is_common_operation_mode,
+	},
+	{
+		.ops = &tegracam_ctrl_ops,
+		.id = TEGRA_CAMERA_CID_SYNC_FUNCTION,
+		.name = "Synchronizing Function",
+		.type = V4L2_CTRL_TYPE_MENU,
+		.min = 0,
+		.max = ARRAY_SIZE(is_common_sync_function) -1,
+		.def = 1,
+		.qmenu = is_common_sync_function,
+	},
+	{
+		.ops = &tegracam_ctrl_ops,
+		.id = TEGRA_CAMERA_CID_BROADCAST,
+		.name = "I2C Broadcast controls",
+		.type = V4L2_CTRL_TYPE_MENU,
+		.min = 0,
+		.max = ARRAY_SIZE(is_common_i2c_broadcast) -1,
+		.def = 0,
+		.qmenu = is_common_i2c_broadcast,
+	},
+	{
+		.ops = &tegracam_ctrl_ops,
+		.id = TEGRA_CAMERA_CID_BLACK_LEVEL,
+		.name = "Black Level",
+		.type = V4L2_CTRL_TYPE_INTEGER64,
+		.flags = V4L2_CTRL_FLAG_SLIDER,
+		.min = CTRL_U64_MIN,
+		.max = CTRL_U64_MAX,
+		.def = CTRL_U64_MIN,
+		.step = 1,
+	},
+	{
+		.ops = &tegracam_ctrl_ops,
+		.id = TEGRA_CAMERA_CID_FPGA_FIRMWARE_PROPERTIES,
+		.name = "Check Firmware Compatibility",
+		.type = V4L2_CTRL_TYPE_MENU,
+		.min = 0,
+		.max = ARRAY_SIZE(is_common_verify_fw_menu) -1,
+		.def = 1,
+		.qmenu = is_common_verify_fw_menu,
+	},
+	{
+		.ops = &tegracam_ctrl_ops,
+		.id = TEGRA_CAMERA_CID_DIGITAL_GAIN,
+		.name = "Digital gain",
+		.type = V4L2_CTRL_TYPE_INTEGER64,
+		.flags = V4L2_CTRL_FLAG_SLIDER,
+		.min = CTRL_U64_MIN,
+		.max = CTRL_U64_MAX,
+		.def = CTRL_U64_MIN,
+		.step = 1,
+	},
+	{
+		.ops = &tegracam_ctrl_ops,
+		.id = TEGRA_CAMERA_CID_FLIP_MIRROR,
+		.name = "Flip/Mirror",
+		.type = V4L2_CTRL_TYPE_MENU,
+		.min = 0,
+		.max = ARRAY_SIZE(is_common_flip_mirror) -1,
+		.def = 0,
+		.qmenu = is_common_flip_mirror,
+	},
+	{
+		.ops = &tegracam_ctrl_ops,
+		.id = TEGRA_CAMERA_CID_SHUTTER_MODE,
+		.name = "Global Shutter Mode",
+		.type = V4L2_CTRL_TYPE_MENU,
+		.min = 0,
+		.max = ARRAY_SIZE(is_global_shutter_mode) -1,
+		.def = 0,
+		.qmenu = is_global_shutter_mode,
+	},
+	{
+		.ops = &tegracam_ctrl_ops,
+		.id = TEGRA_CAMERA_CID_TG_MODE,
+		.name = "Timing Generator Mode",
+		.type = V4L2_CTRL_TYPE_MENU,
+		.min = 0,
+		.max = ARRAY_SIZE(timing_generator_mode) -1,
+		.def = 0,
+		.qmenu = timing_generator_mode,
+	},
+	{
+		.ops = &tegracam_ctrl_ops,
+		.id = TEGRA_CAMERA_CID_EXPAND_EXPOSURE,
+		.name = "Expanded exposure",
+		.type = V4L2_CTRL_TYPE_INTEGER64,
+		.flags = V4L2_CTRL_FLAG_SLIDER,
+		.min = 0,
+		.max = CTRL_U32_MAX,
+		.def = CTRL_U32_MIN,
+		.step = 1,
+	},
+	{
+		.ops = &tegracam_ctrl_ops,
+		.id = TEGRA_CAMERA_CID_FRAME_DELAY,
+		.name = "Delay frame",
+		.type = V4L2_CTRL_TYPE_INTEGER64,
+		.flags = V4L2_CTRL_FLAG_SLIDER,
+		.min = 0,
+		.max = CTRL_U32_MAX,
+		.def = CTRL_U32_MIN,
+		.step = 1,
 	},
 };
 
@@ -321,6 +492,42 @@ static int tegracam_set_ctrls(struct tegracam_ctrl_handler *handler,
 		break;
 	case TEGRA_CAMERA_CID_GROUP_HOLD:
 		err = ops->set_group_hold(tc_dev, ctrl->val);
+		break;
+	case TEGRA_CAMERA_CID_STREAMING_MODE:
+		err = ops->set_streaming_mode(tc_dev, *ctrl->p_new.p_u32);
+		break;
+	case TEGRA_CAMERA_CID_OPERATION_MODE:
+		err = ops->set_operation_mode(tc_dev, *ctrl->p_new.p_u32);
+		break;
+	case TEGRA_CAMERA_CID_SYNC_FUNCTION:
+		err = ops->set_sync_feature(tc_dev, *ctrl->p_new.p_u32);
+		break;
+	case TEGRA_CAMERA_CID_BROADCAST:
+		err = ops->set_broadcast_ctrl(tc_dev, ctrl);
+		break;
+	case TEGRA_CAMERA_CID_BLACK_LEVEL:
+		err = ops->set_black_level(tc_dev, *ctrl->p_new.p_s64);
+		break;
+	case TEGRA_CAMERA_CID_FPGA_FIRMWARE_PROPERTIES:
+		err = ops->verify_fw_compatibility(tc_dev, &(ctrl->val));
+		break;
+	case TEGRA_CAMERA_CID_DIGITAL_GAIN:
+		err = ops->set_digital_gain(tc_dev, *ctrl->p_new.p_s64);
+		break;
+	case TEGRA_CAMERA_CID_FLIP_MIRROR:
+		err = ops->set_orientation(tc_dev, *ctrl->p_new.p_u32);
+		break;
+	case TEGRA_CAMERA_CID_SHUTTER_MODE:
+		err = ops->set_shutter_mode(tc_dev, ctrl);
+		break;
+	case TEGRA_CAMERA_CID_TG_MODE:
+		err = ops->set_timing_generator_mode(tc_dev, ctrl);
+		break;
+	case TEGRA_CAMERA_CID_EXPAND_EXPOSURE:
+		err = ops->expand_trigger_exposure(tc_dev, *ctrl->p_new.p_u32);
+		break;
+	case TEGRA_CAMERA_CID_FRAME_DELAY:
+		err = ops->delay_frame(tc_dev, *ctrl->p_new.p_u32);
 		break;
 	default:
 		pr_err("%s: unknown ctrl id.\n", __func__);
@@ -479,6 +686,9 @@ int tegracam_ctrl_set_overrides(struct tegracam_ctrl_handler *hdl)
 				else
 					err = ops->set_frame_rate(tc_dev, val);
 				break;
+			case TEGRA_CAMERA_CID_FPGA_FIRMWARE_PROPERTIES:
+					err = ops->verify_fw_compatibility(tc_dev, &control.value);
+				break;
 			default:
 				dev_err(dev, "%s: unsupported override %x\n",
 						__func__, control.id);
@@ -569,6 +779,21 @@ int tegracam_init_ctrl_ranges_by_mode(
 				min_short_exp_time,
 				max_short_exp_time,
 				default_short_exp_time);
+			break;
+		case TEGRA_CAMERA_CID_BLACK_LEVEL:
+			err = v4l2_ctrl_modify_range(ctrl,
+										 ctrl->minimum,
+										 s_data->blklvl_max_range,
+										 ctrl->step, ctrl->default_value);
+				break;
+		case TEGRA_CAMERA_CID_DIGITAL_GAIN:
+			ctrl->default_value = clamp_val(s_data->dig_gain_def_value,
+											s_data->dig_gain_min_range,
+											s_data->dig_gain_max_range);
+			err = v4l2_ctrl_modify_range(ctrl,
+										 s_data->dig_gain_min_range,
+										 s_data->dig_gain_max_range,
+										 ctrl->step, ctrl->default_value);
 			break;
 		default:
 			/* Not required to modify these control ranges */

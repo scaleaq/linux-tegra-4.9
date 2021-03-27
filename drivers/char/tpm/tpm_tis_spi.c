@@ -32,6 +32,7 @@
 #include <linux/wait.h>
 #include <linux/acpi.h>
 #include <linux/freezer.h>
+#include <linux/gpio/consumer.h>
 
 #include <linux/module.h>
 #include <linux/spi/spi.h>
@@ -47,6 +48,7 @@
 struct tpm_tis_spi_phy {
 	struct tpm_tis_data priv;
 	struct spi_device *spi_device;
+	struct gpio_desc *reset_gpio;
 	u8 *iobuf;
 };
 
@@ -190,6 +192,7 @@ static int tpm_tis_spi_probe(struct spi_device *dev)
 {
 	struct tpm_tis_spi_phy *phy;
 	int irq;
+	int ret = 0;
 
 	phy = devm_kzalloc(&dev->dev, sizeof(struct tpm_tis_spi_phy),
 			   GFP_KERNEL);
@@ -207,6 +210,18 @@ static int tpm_tis_spi_probe(struct spi_device *dev)
 		irq = dev->irq;
 	else
 		irq = -1;
+
+	phy->reset_gpio = devm_gpiod_get(&dev->dev, "reset", GPIOD_OUT_HIGH);
+	if (IS_ERR(phy->reset_gpio)) {
+		ret = PTR_ERR(phy->reset_gpio);
+		dev_err(&dev->dev, "cannot get gpio reset %d\n", ret);
+		return ret;
+	}
+
+	gpiod_set_value(phy->reset_gpio, 1);
+	mdelay(1);
+	gpiod_set_value(phy->reset_gpio, 0);
+	mdelay(30);
 
 	return tpm_tis_core_init(&dev->dev, &phy->priv, irq, &tpm_spi_phy_ops,
 				 NULL);

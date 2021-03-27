@@ -1,0 +1,219 @@
+/* This file will be applied after tegra210-scaleaq-carrierboard-common.dtsi */
+
+#include "tegra210-scaleaq-carrierboard-common.dtsi"
+
+/ {
+	scaleaq,carrier_revision = "2";
+
+	serial@70006200 { /* UART-C: EPR100030 communication */
+		status = "okay";
+	};
+
+	serial@70006040 { /* UART-B: Oxygen communication */
+		status = "okay";
+	};
+
+	/* I2C1 - ADC reading */
+	i2c@7000c400 {
+		status = "okay";
+
+		ads1115: ads1115 {
+			compatible = "ti,ads1115";
+			status = "okay";
+			#address-cells = <1>;
+			#size-cells = <0>;
+			reg = <0x48>;
+
+			/* These two channel will be availabe in hwmon module.
+			 * Check https://jumpnowtek.com/rpi/Using-ads1115-ADCs-with-Raspberry-Pis.html
+			 *   and https://github.com/raspberrypi/linux/blob/rpi-4.9.y/arch/arm/boot/dts/overlays/ads1115-overlay.dts
+			 *   and https://www.kernel.org/doc/Documentation/hwmon/ads1015
+			 * Read by command: ls /sys/class/hwmon/hwmon0/device
+			 */
+			channel_a: channel_a {
+				/* Presure sensor, 0-5V, throught divider resistors, range is 0-2.58V
+				 */
+				reg = <4>;
+				ti,gain = <1>;
+				ti,datarate = <1>;
+			};
+
+			channel_b: channel_b {
+				reg = <5>;
+				ti,gain = <1>;
+				ti,datarate = <1>;
+			};
+		};
+
+		/* Configuration for 24AA02E64 eeprom, but not sure it is correct or not
+		 * There is no reference device tree for this type of EEPROM.
+		 */
+		eeprom@50 {
+			compatible = "atmel,24c02";
+			reg = <0x50>;
+			pagesize = <8>;
+		};
+	};
+
+	/* I2C 2 - for GPIO expander */
+	i2c@7000c500 {
+		status = "okay";
+
+		/* TCA9555 driver, address 0x20, interrupt GPIO10 */
+		ioex_0: gpio@20 {
+			compatible = "nxp,pca9555";
+			reg = <0x20>;
+			/* No input pins, so no interrupt definition is required */
+
+			gpio-controller;
+			#gpio-cells = <2>;
+			ngpios = <16>;
+			gpio-line-names =
+				"shdn-1", "de-1", "re-1", "485232-1", "te-1",
+				"iris-dir", "iris-en", "iris-sleep",
+				"ir-en", "ir-ph",
+				"rsvd0-0", "rsvd0-1", "rsvd0-2", "rsvd0-3", "rsvd0-4", "rsvd0-5";
+			shdn-1 {
+				gpio-hog;
+				gpios = <0 GPIO_ACTIVE_HIGH>;
+				output-low;
+				line-name = "shdn-1";
+			};
+			de-1 {
+				gpio-hog;
+				gpios = <1 GPIO_ACTIVE_HIGH>;
+				output-low;
+				line-name = "de-1";
+			};
+			re-1 {
+				gpio-hog;
+				gpios = <2 GPIO_ACTIVE_HIGH>;
+				output-low;
+				line-name = "re-1";
+			};
+			485232-1 {
+				gpio-hog;
+				gpios = <3 GPIO_ACTIVE_HIGH>;
+				output-low;
+				line-name = "485232-1";
+			};
+			te-1 {
+				gpio-hog;
+				gpios = <4 GPIO_ACTIVE_HIGH>;
+				output-low;
+				line-name = "te-1";
+			};
+			iris-dir {
+				gpio-hog;
+				gpios = <5 GPIO_ACTIVE_HIGH>;
+				output-low;
+				line-name = "iris-dir";
+			};
+			iris-en {
+				gpio-hog;
+				gpios = <6 GPIO_ACTIVE_HIGH>;
+				output-low;
+				line-name = "iris-en";
+			};
+			iris-sleep {
+				gpio-hog;
+				gpios = <7 GPIO_ACTIVE_HIGH>;
+				output-low;
+				line-name = "iris-sleep";
+			};
+			ir-en {
+				gpio-hog;
+				gpios = <8 GPIO_ACTIVE_HIGH>;
+				output-low;
+				line-name = "ir-en";
+			};
+			ir-ph {
+				gpio-hog;
+				gpios = <9 GPIO_ACTIVE_HIGH>;
+				output-low;
+				line-name = "ir-ph";
+			};
+		};
+
+		ioex_1: gpio@21 {
+			compatible = "nxp,pca9555";
+			reg = <0x21>;
+			/* No input pins, so no interrupt definition is required */
+
+			gpio-controller;
+			#gpio-cells = <2>;
+			ngpios = <16>;
+			gpio-line-names = \
+				"shdn-2", "de-2", "re-2", "485232-2", "te-2", \
+				"rsvd1-0", "rsvd1-0", "rsvd1-0", \
+				"leden-1", "leden-2", "leden-3", \
+				"rsvd1-0", "rsvd1-0", \
+				"poe-tpl", "poe-tph", "poe-bt"; \
+			shdn-2 {
+				gpio-hog;
+				gpios = <0 GPIO_ACTIVE_HIGH>;
+				output-low;
+				line-name = "shdn-2";
+			};
+			de-2 {
+				gpio-hog;
+				gpios = <1 GPIO_ACTIVE_HIGH>;
+				output-low;
+				line-name = "de-2";
+			};
+			re-2 {
+				gpio-hog;
+				gpios = <2 GPIO_ACTIVE_HIGH>;
+				output-low;
+				line-name = "re-2";
+			};
+			485232-2 {
+				gpio-hog;
+				gpios = <3 GPIO_ACTIVE_HIGH>;
+				output-low;
+				line-name = "485232-2";
+			};
+			te-2 {
+				gpio-hog;
+				gpios = <4 GPIO_ACTIVE_HIGH>;
+				output-low;
+				line-name = "te-2";
+			};
+			leden-1 {
+				gpio-hog;
+				gpios = <8 GPIO_ACTIVE_HIGH>;
+				output-low;
+				line-name = "leden-1";
+			};
+			leden-2 {
+				gpio-hog;
+				gpios = <9 GPIO_ACTIVE_HIGH>;
+				output-low;
+				line-name = "leden-2";
+			};
+			leden-3 {
+				gpio-hog;
+				gpios = <10 GPIO_ACTIVE_HIGH>;
+				output-low;
+				line-name = "leden-3";
+			};
+			poe-tpl {
+				gpio-hog;
+				gpios = <13 GPIO_ACTIVE_HIGH>;
+				line-name = "poe-tpl";
+			};
+			poe-tph {
+				gpio-hog;
+				gpios = <14 GPIO_ACTIVE_HIGH>;
+				line-name = "poe-tph";
+			};
+			poe-bt {
+				gpio-hog;
+				gpios = <15 GPIO_ACTIVE_HIGH>;
+				line-name = "poe-bt";
+			};
+		};
+
+		/delete-node/ battery-charger@6b;
+	};
+};

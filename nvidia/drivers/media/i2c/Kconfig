@@ -165,6 +165,35 @@ config VIDEO_IMX390
 	  To compile this driver as a module, choose M here: the module
 	  will be called imx390.
 
+config VIDEO_IMX482
+	tristate "IMX482 camera sensor support"
+	depends on I2C && VIDEO_V4L2 && VIDEO_V4L2_SUBDEV_API
+	---help---
+	  This is a Video4Linux2 sensor-level driver for the Sony
+	  IMX482 camera sensor
+
+	  To compile this driver as a module, choose M here: the module
+	  will be called imx482.
+
+config VIDEO_IMX485
+	tristate "IMX485 camera sensor support"
+	depends on I2C && VIDEO_V4L2 && VIDEO_V4L2_SUBDEV_API
+	---help---
+	  This is a Video4Linux2 sensor-level driver for the Sony
+	  IMX485 camera sensor
+
+	  To compile this driver as a module, choose M here: the module
+	  will be called imx485.
+
+config FRAMOS_COMMON
+	tristate "Image Sensor Driver common and I2C support"
+	depends on I2C
+	---help---
+	  This is Framos Image Sensor common and I2C logic
+
+	  To compile this driver as a module, choose M here: the module
+	  will be called framos_common.
+
 endmenu
 
 endif

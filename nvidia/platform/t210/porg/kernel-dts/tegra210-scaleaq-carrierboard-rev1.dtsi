@@ -1,0 +1,131 @@
+/* This file will be applied after tegra210-scaleaq-carrierboard-common.dtsi */
+
+#include "tegra210-scaleaq-carrierboard-common.dtsi"
+
+/ {
+	scaleaq,carrier_revision = "1";
+
+	serial@70006200 { /* UART-C : UART3 : M.2 Key E */
+		status = "disabled";
+	};
+
+	/* I2C */
+	/* I2C 2 - for GPIO expander */
+	i2c@7000c500 {
+		status = "okay";
+
+		/* TCA9555 driver, address 0x20, interrupt GPIO10 */
+		tca9555: gpio@20 {
+			compatible = "nxp,pca9555";
+			reg = <0x20>;
+			/* No input pins, so no interrupt definition is required */
+
+			gpio-controller;
+			#gpio-cells = <2>;
+			ngpios = <16>;
+			gpio-line-names =
+				"rxen-1", "dxen-1", "te485-1", "485-232-1",
+				"rxen-0", "dxen-0", "te485-0", "485-232-0",
+				"h-f", "fen", "lb", "fbc", "enb", "led_check", "led_on", "resvd";
+			rxen-0 {
+				gpio-hog;
+				gpios = <0 GPIO_ACTIVE_HIGH>;
+				output-low;
+				line-name = "rxen-0";
+			};
+			dxen-0 {
+				gpio-hog;
+				gpios = <1 GPIO_ACTIVE_HIGH>;
+				output-high;
+				line-name = "dxen-0";
+			};
+			te485-0 {
+				gpio-hog;
+				gpios = <2 GPIO_ACTIVE_HIGH>;
+				output-high;
+				line-name = "te485-0";
+			};
+			485-232-0 {
+				gpio-hog;
+				gpios = <3 GPIO_ACTIVE_HIGH>;
+				output-low;
+				line-name = "485-232-0";
+			};
+			rxen-1 {
+				gpio-hog;
+				gpios = <4 GPIO_ACTIVE_HIGH>;
+				output-low;
+				line-name = "rxen-1";
+			};
+			dxen-1 {
+				gpio-hog;
+				gpios = <5 GPIO_ACTIVE_HIGH>;
+				output-high;
+				line-name = "dxen-1";
+			};
+			te485-1 {
+				gpio-hog;
+				gpios = <6 GPIO_ACTIVE_HIGH>;
+				output-high;
+				line-name = "te485-1";
+			};
+			485-232-1 {
+				gpio-hog;
+				gpios = <7 GPIO_ACTIVE_HIGH>;
+				output-low;
+				line-name = "485-232-1";
+			};
+
+			h-f {
+				gpio-hog;
+				gpios = <8 GPIO_ACTIVE_HIGH>;
+				output-low;
+				line-name = "h-f";
+			};
+			fen {
+				gpio-hog;
+				gpios = <9 GPIO_ACTIVE_HIGH>;
+				output-low;
+				line-name = "fen";
+			};
+			lb {
+				gpio-hog;
+				gpios = <10 GPIO_ACTIVE_HIGH>;
+				output-low;
+				line-name = "lb";
+			};
+			fbc {
+				gpio-hog;
+				gpios = <11 GPIO_ACTIVE_HIGH>;
+				output-low;
+				line-name = "fbc";
+			};
+			enb {
+				gpio-hog;
+				gpios = <12 GPIO_ACTIVE_HIGH>;
+				output-low;
+				line-name = "enb";
+			};
+			led-chk {
+				gpio-hog;
+				gpios = <13 GPIO_ACTIVE_HIGH>;
+				output-high;
+				line-name = "led-chk";
+			};
+			led-on {
+				gpio-hog;
+				gpios = <14 GPIO_ACTIVE_HIGH>;
+				output-high;
+				line-name = "led-on";
+			};
+			resvd {
+				gpio-hog;
+				gpios = <15 GPIO_ACTIVE_HIGH>;
+				output-low;
+				line-name = "resvd";
+			};
+		};
+
+		/delete-node/ battery-charger@6b;
+	};
+};

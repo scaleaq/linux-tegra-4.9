@@ -131,7 +131,7 @@ struct pca953x_chip {
 	struct gpio_chip gpio_chip;
 	const char *const *names;
 	unsigned long driver_data;
-	struct regulator *regulator;
+	// struct regulator *regulator;
 
 	const struct pca953x_reg_config *regs;
 
@@ -745,7 +745,7 @@ static int pca953x_probe(struct i2c_client *client,
 	int irq_base = 0;
 	int ret;
 	u32 invert = 0;
-	struct regulator *reg;
+	// struct regulator *reg;
 
 	chip = devm_kzalloc(&client->dev,
 			sizeof(struct pca953x_chip), GFP_KERNEL);
@@ -765,19 +765,19 @@ static int pca953x_probe(struct i2c_client *client,
 
 	chip->client = client;
 
-	reg = devm_regulator_get(&client->dev, "vcc");
-	if (IS_ERR(reg)) {
-		ret = PTR_ERR(reg);
-		if (ret != -EPROBE_DEFER)
-			dev_err(&client->dev, "reg get err: %d\n", ret);
-		return ret;
-	}
-	ret = regulator_enable(reg);
-	if (ret) {
-		dev_err(&client->dev, "reg en err: %d\n", ret);
-		return ret;
-	}
-	chip->regulator = reg;
+	// reg = devm_regulator_get(&client->dev, "vcc");
+	// if (IS_ERR(reg)) {
+	// 	ret = PTR_ERR(reg);
+	// 	if (ret != -EPROBE_DEFER)
+	// 		dev_err(&client->dev, "reg get err: %d\n", ret);
+	// 	return ret;
+	// }
+	// ret = regulator_enable(reg);
+	// if (ret) {
+	// 	dev_err(&client->dev, "reg en err: %d\n", ret);
+	// 	return ret;
+	// }
+	// chip->regulator = reg;
 
 	if (i2c_id) {
 		chip->driver_data = i2c_id->driver_data;
@@ -864,7 +864,7 @@ static int pca953x_probe(struct i2c_client *client,
 	return 0;
 
 err_exit:
-	regulator_disable(chip->regulator);
+	// regulator_disable(chip->regulator);
 	return ret;
 }
 
@@ -884,7 +884,7 @@ static int pca953x_remove(struct i2c_client *client)
 		ret = 0;
 	}
 
-	regulator_disable(chip->regulator);
+// regulator_disable(chip->regulator);
 
 	return ret;
 }

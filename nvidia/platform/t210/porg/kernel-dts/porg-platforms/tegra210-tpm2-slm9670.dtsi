@@ -1,0 +1,42 @@
+/*
+ * tegra210-tpm2-slm9670.dtsi - Infinion SLM9670 driver device tree
+ *
+ * Copyright (c) 2010. ScaleAQ.  All rights reserved.
+ *
+ */
+
+#include <dt-bindings/media/camera.h>
+#include <dt-bindings/platform/t210/t210.h>
+
+/ {
+	spi@7000d400 {
+		status = "okay";
+
+		cs-gpios = <&gpio TEGRA_GPIO(C, 3) GPIO_ACTIVE_LOW>;
+
+		slb9670: slb9670@0{
+			compatible = "infineon,slb9670";
+			reg = <0>;
+			spi-max-frequency = <20000000>;
+			status = "okay";
+			reset-gpios = <&gpio TEGRA_GPIO(BB, 0) GPIO_ACTIVE_LOW>;
+
+			controller-data {
+				nvidia,variable-length-transfer;
+				nvidia,rx-clk-tap-delay = <31>;
+			};
+		};
+
+/*
+		spi@0 {
+			compatible = "spidev";
+			reg = <0x0>;
+			spi-max-frequency = <20000000>;
+			status = "okay";
+			controller-data {
+				nvidia,enable-hw-based-cs;
+				nvidia,rx-clk-tap-delay = <7>;
+			};
+		};*/
+	};
+};

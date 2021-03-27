@@ -1,0 +1,72 @@
+/* This file will be applied after tegra210-porg-p3448-common.dtsi */
+
+/ {
+	model = "ScaleAQ Orbit Carrier Board";
+
+	sdhci@700b0400 { /* SDMMC3 for SD card */
+		status = "okay";
+		/delete-property/ cd-gpios;
+		/delete-property/ nvidia,cd-wakeup-capable;
+		broken-cd;
+		disable-wp;
+		no-1-8-v;
+		/delete-property/ keep-power-in-suspend;
+		/delete-property/ non-removable;
+		/delete-property/ mmc-ddr-1_8v;
+	};
+
+	/* No HDMI/DP --> Disable display controllers */
+	host1x {
+		dc@54200000 {
+			status = "disabled";
+		};
+		dc@54240000 {
+			status = "disabled";
+		};
+	};
+
+	i2c@7000c700 {
+		status = "disabled";
+	};
+
+	/* I2C 1 - disabled */
+	i2c@7000c400 {
+		status = "disabled";
+	};
+	/* I2C 0 - for BNO085 sensor */
+	i2c@7000c000 {
+		status = "okay";
+	};
+
+	sound { /* Camera has no sound system */
+		status = "disabled";
+	};
+
+	gpio@6000d000 {
+		/* gpio-name for 40-pin header, gpio-name given as COL(10) x ROW(20) */
+		gpio-line-names = "",          "",          "",          "",          "",         "",         "",          "",          "",          "",
+						  "",          "",          "SPI1_MOSI", "SPI1_MISO", "SPI1_SCK", "SPI1_CS0", "SPI0_MOSI", "SPI0_MISO", "SPI0_SCK",  "SPI0_CS0",
+						  "SPI0_CS1",  "",          "",          "",          "",         "",         "",          "",          "",          "",
+						  "",          "",          "",          "",          "",         "",         "",          "",          "GPIO13",    "",
+						  "",          "",          "",          "",          "",         "",         "",          "",          "",          "",
+						  "UART1_RTS", "UART1_CTS", "",          "",          "",         "",         "",          "",          "",          "",
+						  "",          "",          "",          "",          "",         "",         "",          "",          "",          "",
+						  "",          "",          "",          "",          "",         "",         "I2S0_FS",   "I2S0_DIN",  "I2S0_DOUT", "I2S0_SCLK",
+						  "",          "",          "",          "",          "",         "",         "",          "",          "",          "",
+						  "",          "",          "",          "",          "",         "",         "",          "",          "",          "",
+						  "",          "",          "",          "",          "",         "",         "",          "",          "",          "",
+						  "",          "",          "",          "",          "",         "",         "",          "",          "",          "",
+						  "",          "",          "",          "",          "",         "",         "",          "",          "",          "",
+						  "",          "",          "",          "",          "",         "",         "",          "",          "",          "",
+						  "",          "",          "",          "",          "",         "",         "",          "",          "",          "GPIO01",
+						  "",          "",          "",          "",          "",         "",         "",          "",          "",          "",
+						  "",          "",          "",          "",          "",         "",         "",          "",          "GPIO07",    "",
+						  "",          "",          "",          "",          "",         "",         "",          "",          "",          "",
+						  "",          "",          "",          "",          "",         "",         "",          "",          "",          "",
+						  "",          "",          "",          "",          "GPIO12",   "",         "",          "",          "",          "",
+						  "GPIO11",    "",          "",          "",          "",         "",         "",          "",          "",          "",
+						  "",          "",          "",          "",          "",         "",         "GPIO09",    "",          "",          "",
+						  "",          "",          "",          "",          "",         "",         "",          "",          "",          "",
+						  "",          "",          "SPI1_CS1",  "",          "",         "",         "",          "",          "",          "";
+	};
+};

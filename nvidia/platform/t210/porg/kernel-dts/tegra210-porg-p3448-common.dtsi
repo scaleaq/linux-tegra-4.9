@@ -27,6 +27,7 @@
 #include "porg-platforms/tegra210-porg-power-tree-p3448-0000-a00.dtsi"
 #include "porg-platforms/tegra210-pinmux-drive-sdmmc-common.dtsi"
 #include "porg-platforms/tegra210-porg-pwm-fan.dtsi"
+//#include "porg-platforms/tegra210-porg-camera.dtsi"
 #include <t210-common-platforms/tegra210-ers-hdmi-e2190-1100-a00.dtsi>
 #include <t210-common-platforms/tegra210-dp.dtsi>
 #include <t210-common-platforms/tegra210-thermal-userspace-alert.dtsi>
@@ -189,50 +190,6 @@
 			sdmmc-io-pads {
 				pins = "sdmmc1", "sdmmc3";
 				nvidia,enable-voltage-switching;
-			};
-		};
-	};
-
-	hdr40_spi1: spi@7000d400 { /* SPI 1 to 40 pin header */
-		status = "okay";
-		spi@0 {
-			compatible = "tegra-spidev";
-			reg = <0x0>;
-			spi-max-frequency = <33000000>;
-			controller-data {
-				nvidia,enable-hw-based-cs;
-				nvidia,rx-clk-tap-delay = <7>;
-			};
-		};
-		spi@1 {
-			compatible = "tegra-spidev";
-			reg = <0x1>;
-			spi-max-frequency = <33000000>;
-			controller-data {
-				nvidia,enable-hw-based-cs;
-				nvidia,rx-clk-tap-delay = <7>;
-			};
-		};
-	};
-
-	hdr40_spi2: spi@7000d600 { /* SPI 2 to 40 pin header */
-		status = "okay";
-		spi@0 {
-			compatible = "tegra-spidev";
-			reg = <0x0>;
-			spi-max-frequency = <33000000>;
-			controller-data {
-				nvidia,enable-hw-based-cs;
-				nvidia,rx-clk-tap-delay = <6>;
-			};
-		};
-		spi@1 {
-			compatible = "tegra-spidev";
-			reg = <0x1>;
-			spi-max-frequency = <33000000>;
-			controller-data {
-				nvidia,enable-hw-based-cs;
-				nvidia,rx-clk-tap-delay = <6>;
 			};
 		};
 	};

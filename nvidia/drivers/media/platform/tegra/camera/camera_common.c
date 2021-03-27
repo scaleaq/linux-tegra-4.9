@@ -54,7 +54,7 @@ static const struct camera_common_colorfmt camera_common_color_fmts[] = {
 	{
 		MEDIA_BUS_FMT_SGBRG12_1X12,
 		V4L2_COLORSPACE_SRGB,
-		V4L2_PIX_FMT_SGBRG12
+		V4L2_PIX_FMT_SGBRG12,
 	},
 	{
 		MEDIA_BUS_FMT_SRGGB10_1X10,
@@ -75,6 +75,16 @@ static const struct camera_common_colorfmt camera_common_color_fmts[] = {
 		MEDIA_BUS_FMT_SBGGR10_1X10,
 		V4L2_COLORSPACE_SRGB,
 		V4L2_PIX_FMT_SBGGR10,
+	},
+	{
+		MEDIA_BUS_FMT_SGBRG8_1X8,
+		V4L2_COLORSPACE_SRGB,
+		V4L2_PIX_FMT_SGBRG8,
+	},
+	{
+		MEDIA_BUS_FMT_SGRBG8_1X8,
+		V4L2_COLORSPACE_SRGB,
+		V4L2_PIX_FMT_SGRBG8,
 	},
 	{
 		MEDIA_BUS_FMT_SRGGB8_1X8,
@@ -593,6 +603,7 @@ static void select_mode(struct camera_common_data *s_data,
 int camera_common_try_fmt(struct v4l2_subdev *sd, struct v4l2_mbus_framefmt *mf)
 {
 	struct camera_common_data *s_data = to_camera_common_data(sd->dev);
+	struct camera_common_sensor_ops *sensor_ops = s_data->ops;
 	struct tegra_channel *chan = v4l2_get_subdev_hostdata(sd);
 	struct v4l2_control hdr_control;
 	const struct camera_common_frmfmt *frmfmt = s_data->frmfmt;
@@ -666,6 +677,14 @@ int camera_common_try_fmt(struct v4l2_subdev *sd, struct v4l2_mbus_framefmt *mf)
 
 	if (!camera_common_verify_code(chan, mf->code))
 		err = -EINVAL;
+
+	if (sensor_ops->check_unsupported_mode){
+		err = sensor_ops->check_unsupported_mode(s_data, mf);
+		if (err) {
+			dev_err(sd->dev, "Error checking unsupported mode\n");
+			return err;
+		}
+	}
 
 verify_code:
 	mf->field = V4L2_FIELD_NONE;

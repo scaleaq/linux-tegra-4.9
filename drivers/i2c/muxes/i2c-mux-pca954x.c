@@ -187,6 +187,10 @@ static int pca954x_select_chan(struct i2c_mux_core *muxc, u32 chan)
 	else
 		regval = 1 << chan;
 
+	if (chan == 7) {
+		regval = 0x55;
+	}
+
 	/* Only select the channel if its different from the last channel */
 	if (data->last_chan != regval) {
 		ret = pca954x_reg_write(muxc->parent, client, regval);

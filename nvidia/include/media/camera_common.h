@@ -64,6 +64,7 @@ struct camera_common_power_rail {
 	struct regulator *iovdd;
 	struct regulator *vcmvdd;
 	struct clk *mclk;
+	unsigned int fw_reset_gpio;
 	unsigned int pwdn_gpio;
 	unsigned int reset_gpio;
 	unsigned int af_gpio;
@@ -82,6 +83,7 @@ struct camera_common_pdata {
 	const char *parentclk_name; /* NULL for no parent clock*/
 	unsigned int pwdn_gpio;
 	unsigned int reset_gpio;
+	unsigned int creset_b;
 	unsigned int af_gpio;
 	bool ext_reg;
 	int (*power_on)(struct camera_common_power_rail *pw);
@@ -89,6 +91,7 @@ struct camera_common_pdata {
 	struct camera_common_regulators regulators;
 	bool use_cam_gpio;
 	bool has_eeprom;
+	bool has_color_filter;
 	bool v_flip;
 	bool h_mirror;
 	unsigned int fuse_id_addr;
@@ -179,6 +182,7 @@ struct camera_common_sensor_ops {
 	int (*set_mode)(struct tegracam_device *tc_dev);
 	int (*start_streaming)(struct tegracam_device *tc_dev);
 	int (*stop_streaming)(struct tegracam_device *tc_dev);
+	int (*check_unsupported_mode)(struct camera_common_data *s_data, struct v4l2_mbus_framefmt *mf);
 };
 
 struct tegracam_sensor_data {
@@ -193,12 +197,28 @@ struct tegracam_ctrl_ops {
 	const u32 *ctrl_cid_list;
 	bool is_blob_supported;
 	int (*set_gain)(struct tegracam_device *tc_dev, s64 val);
+	int (*set_digital_gain)(struct tegracam_device *tc_dev, s64 val);
 	int (*set_exposure)(struct tegracam_device *tc_dev, s64 val);
 	int (*set_exposure_short)(struct tegracam_device *tc_dev, s64 val);
 	int (*set_frame_rate)(struct tegracam_device *tc_dev, s64 val);
 	int (*set_group_hold)(struct tegracam_device *tc_dev, bool val);
 	int (*fill_string_ctrl)(struct tegracam_device *tc_dev,
 				struct v4l2_ctrl *ctrl);
+	int (*set_test_pattern)(struct tegracam_device *tc_dev, u32 val);
+	int (*set_streaming_mode)(struct tegracam_device *tc_dev, u32 val);
+	int (*set_operation_mode)(struct tegracam_device *tc_dev, u32 val);
+	int (*set_sync_feature)(struct tegracam_device *tc_dev, u32 val);
+	int (*set_broadcast_ctrl)(struct tegracam_device *tc_dev,
+				  struct v4l2_ctrl *ctrl);
+	int (*verify_fw_compatibility)(struct tegracam_device *tc_dev,s32 *val);
+	int (*set_shutter_mode)(struct tegracam_device *tc_dev,
+				struct v4l2_ctrl *ctrl);
+	int (*set_timing_generator_mode)(struct tegracam_device *tc_dev,
+					 struct v4l2_ctrl *ctrl);
+	int (*set_orientation)(struct tegracam_device *tc_dev, u32 val);
+	int (*expand_trigger_exposure)(struct tegracam_device *tc_dev, u32 val);
+	int (*delay_frame)(struct tegracam_device *tc_dev, u32 val);
+	int (*set_black_level)(struct tegracam_device *tc_dev, s64 val);
 	int (*fill_compound_ctrl)(struct tegracam_device *tc_dev,
 				struct v4l2_ctrl *ctrl);
 	int (*set_gain_ex)(struct tegracam_device *tc_dev,
@@ -235,24 +255,34 @@ struct camera_common_data {
 	struct module				*owner;
 
 	struct sensor_properties		sensor_props;
+	struct crosslink_private *cl_priv;
 	/* TODO: cleanup neeeded once all the sensors adapt new framework */
 	struct tegracam_ctrl_handler		*tegracam_ctrl_hdl;
 	struct regmap				*regmap;
+	struct regmap				*broadcast_regmap;
+	struct regmap				*crosslink_regmap;
 	struct camera_common_pdata		*pdata;
 	/* TODO: cleanup needed for priv once all the sensors adapt new framework */
 	void	*priv;
+	s64 exposure_min_range, exposure_max_range;
+	s64 short_exposure_min_range, short_exposure_max_range;
 	int	numctrls;
 	int	csi_port;
 	int	numlanes;
 	int	mode;
-	int 	mode_prop_idx;
+	int	mode_prop_idx;
 	int	numfmts;
+	int	blklvl_max_range;
+	int	dig_gain_def_value;
+	int	dig_gain_max_range;
+	int	dig_gain_min_range;
 	int	def_mode, def_width, def_height;
 	int	def_clk_freq;
 	int	fmt_width, fmt_height;
 	int	sensor_mode_id;
 	bool	use_sensor_mode_id;
 	bool	override_enable;
+	bool	group_hold_active;
 	u32	version;
 };
 
