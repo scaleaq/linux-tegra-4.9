@@ -59,6 +59,9 @@ void fm_get_board_model(struct tegracam_device *tc_dev, u8 *som_board_model)
     else if(!strcmp(model, "NVIDIA Jetson Xavier NX Developer Kit")){
         *som_board_model = JETSON_XAVIER_NX_DEV_KIT;
     }
+    else if(!strcmp(model, "ScaleAQ Orbit Nano")){
+        *som_board_model = JETSON_NANO_DEV_KIT;
+    }
 
     pr_info("MODEL: %u\n", *som_board_model);
     return;

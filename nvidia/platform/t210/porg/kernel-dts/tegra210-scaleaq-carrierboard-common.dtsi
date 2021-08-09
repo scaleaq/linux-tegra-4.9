@@ -1,7 +1,7 @@
 /* This file will be applied after tegra210-porg-p3448-common.dtsi */
 
 / {
-	model = "ScaleAQ Orbit Carrier Board";
+	model = "ScaleAQ Orbit Nano";
 
 	sdhci@700b0400 { /* SDMMC3 for SD card */
 		status = "okay";

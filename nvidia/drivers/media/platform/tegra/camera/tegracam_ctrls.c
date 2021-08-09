@@ -53,6 +53,7 @@ static const u32 tegracam_override_cids[] = {
 	TEGRA_CAMERA_CID_EXPOSURE,
 	TEGRA_CAMERA_CID_FRAME_RATE,
 	TEGRA_CAMERA_CID_FPGA_FIRMWARE_PROPERTIES,
+	TEGRA_CAMERA_CID_BLACK_LEVEL,
 };
 #define NUM_OVERRIDE_CTRLS ARRAY_SIZE(tegracam_override_cids)
 
@@ -689,6 +690,9 @@ int tegracam_ctrl_set_overrides(struct tegracam_ctrl_handler *hdl)
 			case TEGRA_CAMERA_CID_FPGA_FIRMWARE_PROPERTIES:
 					err = ops->verify_fw_compatibility(tc_dev, &control.value);
 				break;
+			case TEGRA_CAMERA_CID_BLACK_LEVEL:
+					err = ops->set_black_level(tc_dev, val);
+				break;
 			default:
 				dev_err(dev, "%s: unsupported override %x\n",
 						__func__, control.id);
@@ -947,6 +951,27 @@ static int tegracam_check_ctrl_ops(
 		/* The below controls are handled by framework */
 		case TEGRA_CAMERA_CID_SENSOR_MODE_ID:
 		case TEGRA_CAMERA_CID_HDR_EN:
+		case TEGRA_CAMERA_CID_DATA_RATE:
+		case TEGRA_CAMERA_CID_TEST_PATTERN:
+		case TEGRA_CAMERA_CID_HDR_CONTROL:
+		case TEGRA_CAMERA_CID_HDR_LIN_KNEE1:
+		case TEGRA_CAMERA_CID_HDR_LIN_KNEE2:
+		case TEGRA_CAMERA_CID_XVS_XHS_STATE:
+		case TEGRA_CAMERA_CID_PWL_LUT_CONTROL:
+		case TEGRA_CAMERA_CID_DIGITAL_GAIN_SHORT:
+		case TEGRA_CAMERA_CID_BLACK_LEVEL_SHORT:
+		case TEGRA_CAMERA_CID_STREAMING_MODE:
+		case TEGRA_CAMERA_CID_OPERATION_MODE:
+		case TEGRA_CAMERA_CID_SYNC_FUNCTION:
+		case TEGRA_CAMERA_CID_BROADCAST:
+		case TEGRA_CAMERA_CID_BLACK_LEVEL:
+		case TEGRA_CAMERA_CID_FPGA_FIRMWARE_PROPERTIES:
+		case TEGRA_CAMERA_CID_DIGITAL_GAIN:
+		case TEGRA_CAMERA_CID_FLIP_MIRROR:
+		case TEGRA_CAMERA_CID_SHUTTER_MODE:
+		case TEGRA_CAMERA_CID_TG_MODE:
+		case TEGRA_CAMERA_CID_EXPAND_EXPOSURE:
+		case TEGRA_CAMERA_CID_FRAME_DELAY:
 			mode_ops++;
 			break;
 		default:

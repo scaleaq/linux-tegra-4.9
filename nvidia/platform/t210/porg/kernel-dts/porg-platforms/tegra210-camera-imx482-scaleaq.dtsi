@@ -66,6 +66,7 @@
 
 	cam_i2cmux {
 		i2c_0: i2c@0 {
+			status = "okay";
 			imx482_cam0: imx482_a@1a {
 				compatible = "framos,imx482";
 				reg = <0x1a>;
@@ -248,6 +249,7 @@
 / {
 	tegra-camera-platform {
 		compatible = "nvidia, tegra-camera-platform";
+		status = "okay";
 
 		/**
 		* Physical settings to calculate max ISO BW
@@ -298,7 +300,9 @@
 				badge = "imx482_front_framos";
 				position = "front";
 				orientation = "1";
+				status = "okay";
 				cam_module0_drivernode0: drivernode0 {
+					status = "okay";
 					/* Declare PCL support driver (classically known as guid)  */
 					pcl_id = "v4l2_sensor";
 					/* Driver v4l2 device name */

@@ -256,6 +256,7 @@ static const imx482_reg imx482_1440_mbps[] = {
 static const imx482_reg imx482_init_settings[] = {
 
     {WINMODE,              0x00},
+    {CFMODE,               0x05},
     {ADDMODE,              0x02},
     {VMAX_MID,             0x08},
     {VMAX_LOW,             0xCA},
@@ -386,7 +387,7 @@ static const imx482_reg mode_1932x1090[] = {
     {HADD,                 0x01},
     {VADD,                 0x01},
     {ADDMODE,              0x02},
-    {DIG_CLP_VSTART,       0x04},
+    {DIG_CLP_VSTART,       0x02},
 
     {IMX482_TABLE_WAIT_MS, IMX482_WAIT_MS},
     {IMX482_TABLE_END,     0x0000}
@@ -398,7 +399,7 @@ static const imx482_reg mode_crop_1920x1080[] = {
     {HADD,                 0x01},
     {VADD,                 0x01},
     {ADDMODE,              0x02},
-    {DIG_CLP_VSTART,       0x04},
+    {DIG_CLP_VSTART,       0x02},
 
     {PIX_HST_HIGH,          IMX482_TO_MID_BYTE(6)},
     {PIX_HST_LOW,           IMX482_TO_LOW_BYTE(6)},
@@ -415,20 +416,22 @@ static const imx482_reg mode_crop_1920x1080[] = {
 };
 
 static const imx482_reg mode_enable_pattern_generator[] = {
-
+    {CFMODE,               0x00},
+    {ADDMODE,              0x01},
     {BLKLEVEL_LOW,         0x00},
     {TPG_EN_DUOUT,         0x01},
     {TPG_COLORWIDTH_STLINE_SEL,         0x00},
     {TESTCLKEN_MIPI,       0x20},
     {DIG_CLP_MODE,         0x00},
     {WRJ_OPEN,             0x00},
+    {TPG_PATSEL_DUOUT,     0x0A},
 
     {IMX482_TABLE_WAIT_MS, IMX482_WAIT_MS},
     {IMX482_TABLE_END,     0x0000}
 };
 
 static const imx482_reg mode_disable_pattern_generator[] = {
-
+    {CFMODE,               0x05},
     {BLKLEVEL_LOW,         0x32},
     {TPG_EN_DUOUT,         0x00},
     {TPG_COLORWIDTH_STLINE_SEL,         0x10},

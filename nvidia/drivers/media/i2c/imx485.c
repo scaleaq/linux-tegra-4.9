@@ -39,7 +39,8 @@
 #define IMX485_MAX_GAIN_DEC 240
 #define IMX485_MAX_GAIN_DB  72
 
-#define IMX485_MAX_BLACK_LEVEL 0x3FF
+#define IMX485_MAX_BLACK_LEVEL_12BIT 0xFFC
+#define IMX485_MAX_BLACK_LEVEL_10BIT 0x3FF
 
 #define IMX485_MIN_SHR0_LENGTH 6
 #define IMX485_MIN_INTEGRATION_LINES 2
@@ -50,7 +51,7 @@
 #define IMX485_INCK 74250000LL
 
 /**
- * list HEAD of private data of all probed sensors on the platform 
+ * list HEAD of private data of all probed sensors on the platform
  */
 LIST_HEAD(imx485_sensor_list);
 
@@ -74,47 +75,47 @@ static const struct v4l2_ctrl_ops imx485_custom_ctrl_ops = {
 };
 
 const char * const imx485_data_rate_menu[] = {
-    [IMX485_1782_MBPS] = "1782 Mbps/lane",
-    [IMX485_1440_MBPS] = "1440 Mbps/lane",
+	[IMX485_1782_MBPS] = "1782 Mbps/lane",
+	[IMX485_1440_MBPS] = "1440 Mbps/lane",
 };
 
 static const char * const imx485_test_pattern_menu[] = {
-    [0] = "No pattern",
-    [1] = "000h Pattern",
-    [2] = "3FF/FFFh Pattern",
-    [3] = "155/555h Pattern",
-    [4] = "2AA/AAAh Pattern",
-    [5] = "155h/2AAh 555/AAAh Pattern",
-    [6] = "2AAh/155h AAA/555h Pattern",
-    [7] = "000h/155h 000/555h Pattern",
-    [8] = "155h/000h 555/000h Pattern",
-    [9] = "000h/3FFh 000/FFFh Pattern",
-    [10] = "3FFh/000h FFF/000h Pattern",
-    [11] = "H Color-bar",
-    [12] = "V Color-bar",
+	[0] = "No pattern",
+	[1] = "000h Pattern",
+	[2] = "3FF/FFFh Pattern",
+	[3] = "155/555h Pattern",
+	[4] = "2AA/AAAh Pattern",
+	[5] = "155h/2AAh 555/AAAh Pattern",
+	[6] = "2AAh/155h AAA/555h Pattern",
+	[7] = "000h/155h 000/555h Pattern",
+	[8] = "155h/000h 555/000h Pattern",
+	[9] = "000h/3FFh 000/FFFh Pattern",
+	[10] = "3FFh/000h FFF/000h Pattern",
+	[11] = "H Color-bar",
+	[12] = "V Color-bar",
 };
 
 static struct v4l2_ctrl_config imx485_custom_ctrl_list[] = {
-    {
-        .ops = &imx485_custom_ctrl_ops,
-        .id = TEGRA_CAMERA_CID_DATA_RATE,
-        .name = "Data Rate",
-        .type = V4L2_CTRL_TYPE_MENU,
-        .min = 0,
-        .max = ARRAY_SIZE(imx485_data_rate_menu) - 1,
-        .def = 0,
-        .qmenu = imx485_data_rate_menu,
-    },
-    {
-        .ops = &imx485_custom_ctrl_ops,
-        .id = TEGRA_CAMERA_CID_TEST_PATTERN,
-        .name = "Test Pattern",
-        .type = V4L2_CTRL_TYPE_MENU,
-        .min = 0,
-        .max = ARRAY_SIZE(imx485_test_pattern_menu) - 1,
-        .def = 0,
-        .qmenu = imx485_test_pattern_menu,
-    },
+	{
+		.ops = &imx485_custom_ctrl_ops,
+		.id = TEGRA_CAMERA_CID_DATA_RATE,
+		.name = "Data Rate",
+		.type = V4L2_CTRL_TYPE_MENU,
+		.min = 0,
+		.max = ARRAY_SIZE(imx485_data_rate_menu) - 1,
+		.def = 0,
+		.qmenu = imx485_data_rate_menu,
+	},
+	{
+		.ops = &imx485_custom_ctrl_ops,
+		.id = TEGRA_CAMERA_CID_TEST_PATTERN,
+		.name = "Test Pattern",
+		.type = V4L2_CTRL_TYPE_MENU,
+		.min = 0,
+		.max = ARRAY_SIZE(imx485_test_pattern_menu) - 1,
+		.def = 0,
+		.qmenu = imx485_test_pattern_menu,
+	},
 };
 
 static const u32 ctrl_cid_list[] = {
@@ -122,26 +123,27 @@ static const u32 ctrl_cid_list[] = {
 	TEGRA_CAMERA_CID_EXPOSURE,
 	TEGRA_CAMERA_CID_FRAME_RATE,
 	TEGRA_CAMERA_CID_SENSOR_MODE_ID,
-    TEGRA_CAMERA_CID_STREAMING_MODE,
-    TEGRA_CAMERA_CID_OPERATION_MODE,
-    TEGRA_CAMERA_CID_SYNC_FUNCTION,
-    TEGRA_CAMERA_CID_BROADCAST,
-    TEGRA_CAMERA_CID_BLACK_LEVEL,
+	TEGRA_CAMERA_CID_STREAMING_MODE,
+	TEGRA_CAMERA_CID_OPERATION_MODE,
+	TEGRA_CAMERA_CID_SYNC_FUNCTION,
+	TEGRA_CAMERA_CID_BROADCAST,
+	TEGRA_CAMERA_CID_BLACK_LEVEL,
 };
 
 struct imx485 {
 	struct i2c_client	        *i2c_client;
 	struct v4l2_subdev	        *subdev;
 	u64				            frame_length;
-    u64                         min_frame_length;
+	u64                         min_frame_length;
+	u64                         black_level;
 	u32				            line_time;
-    u8                          data_rate;
-    streaming_mode              current_streaming_mode;
-    operation_mode              current_operation_mode;
-    sync_mode                   current_sync_mode;
-    i2c_broadcast_ctrl          broadcast_ctrl;
-    struct mutex                pw_mutex;
-    struct list_head            entry; 
+	u8                          data_rate;
+	streaming_mode              current_streaming_mode;
+	operation_mode              current_operation_mode;
+	sync_mode                   current_sync_mode;
+	i2c_broadcast_ctrl          broadcast_ctrl;
+	struct mutex                pw_mutex;
+	struct list_head            entry;
 	struct camera_common_data	*s_data;
 	struct tegracam_device		*tc_dev;
 };
@@ -155,12 +157,12 @@ static const struct regmap_config sensor_regmap_config = {
 
 static bool imx485_is_binning_mode(struct camera_common_data *s_data)
 {
-    switch (s_data->mode) {
-    case IMX485_MODE_H2V2_BINNING:
-        return true;
-    default:
-        return false;
-    }
+	switch (s_data->mode) {
+	case IMX485_MODE_H2V2_BINNING:
+		return true;
+	default:
+		return false;
+	}
 }
 
 static inline int imx485_read_reg(struct camera_common_data *s_data,
@@ -193,131 +195,131 @@ static int imx485_write_reg(struct camera_common_data *s_data,
  * I2C command is braodcasted using the 2nd i2c address
  */
 static int imx485_write_reg_broadcast(struct camera_common_data *s_data,
-                                        u16 addr, u8 val)
-{   
+										u16 addr, u8 val)
+{
 	int err;
 	struct device *dev = s_data->dev;
-    
-    err = regmap_write(s_data->broadcast_regmap, addr, val);
-    if (err) {
-        dev_err(dev, "%s: i2c write failed, %x = %x\n", 
-            __func__, addr, val);
-    }
-    
-    return err;
+
+	err = regmap_write(s_data->broadcast_regmap, addr, val);
+	if (err) {
+		dev_err(dev, "%s: i2c write failed, %x = %x\n",
+			__func__, addr, val);
+	}
+
+	return err;
 }
 
 /**
  * Reads multiple sequential registers at the same time using grouphold
  */
 static int imx485_read_buffered_reg(struct camera_common_data *s_data,
-                                 u16 addr_low, u8 number_of_registers, u64 *val)
+								 u16 addr_low, u8 number_of_registers, u64 *val)
 {
 	struct device *dev = s_data->dev;
-    int err, i;
-    u8 reg;
+	int err, i;
+	u8 reg;
 
-    *val = 0;
+	*val = 0;
 
-    if (!s_data->group_hold_active){
-        err = imx485_write_reg(s_data, REGHOLD, 0x01);
-        if (err) {
-            dev_err(dev, "%s: error setting register hold\n", __func__);
-            return err;
-        }
-    }
+	if (!s_data->group_hold_active){
+		err = imx485_write_reg(s_data, REGHOLD, 0x01);
+		if (err) {
+			dev_err(dev, "%s: error setting register hold\n", __func__);
+			return err;
+		}
+	}
 
-    for (i = 0; i < number_of_registers; i++) {
-        err = imx485_read_reg(s_data, addr_low + i, &reg);
-        *val += reg << (i * 8);
-        if (err) {
-            dev_err(dev, "%s: error reading buffered registers\n", __func__);
-            return err;
-        }
-    }
+	for (i = 0; i < number_of_registers; i++) {
+		err = imx485_read_reg(s_data, addr_low + i, &reg);
+		*val += reg << (i * 8);
+		if (err) {
+			dev_err(dev, "%s: error reading buffered registers\n", __func__);
+			return err;
+		}
+	}
 
-    if (!s_data->group_hold_active){
-        err = imx485_write_reg(s_data, REGHOLD, 0x00);
-        if (err) {
-            dev_err(dev, "%s: error unsetting register hold\n", __func__);
-            return err;
-        }   
-    }
+	if (!s_data->group_hold_active){
+		err = imx485_write_reg(s_data, REGHOLD, 0x00);
+		if (err) {
+			dev_err(dev, "%s: error unsetting register hold\n", __func__);
+			return err;
+		}
+	}
 
-    return err;
+	return err;
 }
 
 /**
  * Writes multiple sequential registers at the same time using reghold
  */
-static int imx485_write_buffered_reg(struct camera_common_data *s_data, 
-                                u16 addr_low, u8 number_of_registers, u64 val)
+static int imx485_write_buffered_reg(struct camera_common_data *s_data,
+								u16 addr_low, u8 number_of_registers, u64 val)
 {
-    int err, i;
+	int err, i;
 	struct device *dev = s_data->dev;
 
-    if (!s_data->group_hold_active){
-        err = imx485_write_reg(s_data, REGHOLD, 0x01);
-        if (err) {
-            dev_err(dev, "%s: GRP_PARAM_HOLD error\n", __func__);
-            return err;
-        }
-    }
+	if (!s_data->group_hold_active){
+		err = imx485_write_reg(s_data, REGHOLD, 0x01);
+		if (err) {
+			dev_err(dev, "%s: GRP_PARAM_HOLD error\n", __func__);
+			return err;
+		}
+	}
 
-    for (i = 0; i < number_of_registers; i++) {
-        err = imx485_write_reg(s_data, addr_low + i, (u8)(val >> (i * 8)));
-        if (err) {
-            dev_err(dev, "%s: BUFFERED register write error\n", __func__);
-            return err;
-        }
-    }
+	for (i = 0; i < number_of_registers; i++) {
+		err = imx485_write_reg(s_data, addr_low + i, (u8)(val >> (i * 8)));
+		if (err) {
+			dev_err(dev, "%s: BUFFERED register write error\n", __func__);
+			return err;
+		}
+	}
 
-    if (!s_data->group_hold_active){
-        err = imx485_write_reg(s_data, REGHOLD, 0x00);
-        if (err) {
-            dev_err(dev, "%s: GRP_PARAM_HOLD erroror\n", __func__);
-            return err;
-        }
-    }
+	if (!s_data->group_hold_active){
+		err = imx485_write_reg(s_data, REGHOLD, 0x00);
+		if (err) {
+			dev_err(dev, "%s: GRP_PARAM_HOLD erroror\n", __func__);
+			return err;
+		}
+	}
 
-    return err;
+	return err;
 }
 
 /**
  * Broadcast multiple sequential registers at the same time using reghold
  */
-static int imx485_broadcast_buffered_reg(struct camera_common_data *s_data, 
-                                u16 addr_low, u8 number_of_registers, u32 val)
+static int imx485_broadcast_buffered_reg(struct camera_common_data *s_data,
+								u16 addr_low, u8 number_of_registers, u32 val)
 {
-    int err, i;
+	int err, i;
 	struct device *dev = s_data->dev;
 
-    if (!s_data->group_hold_active){
-        err = imx485_write_reg_broadcast(s_data, REGHOLD, 0x01);
-        if (err) {
-            dev_err(dev, "%s: GRP_PARAM_HOLD error\n", __func__);
-            return err;
-        }
-    }
+	if (!s_data->group_hold_active){
+		err = imx485_write_reg_broadcast(s_data, REGHOLD, 0x01);
+		if (err) {
+			dev_err(dev, "%s: GRP_PARAM_HOLD error\n", __func__);
+			return err;
+		}
+	}
 
-    for (i = 0; i < number_of_registers; i++) {
-        err = imx485_write_reg_broadcast(s_data, addr_low + i, 
-                    (u8)(val >> (i * 8)));
-        if (err) {
-            dev_err(dev, "%s: BUFFERED register write error\n", __func__);
-            return err;
-        }
-    }
+	for (i = 0; i < number_of_registers; i++) {
+		err = imx485_write_reg_broadcast(s_data, addr_low + i,
+					(u8)(val >> (i * 8)));
+		if (err) {
+			dev_err(dev, "%s: BUFFERED register write error\n", __func__);
+			return err;
+		}
+	}
 
-    if (!s_data->group_hold_active){
-        err = imx485_write_reg_broadcast(s_data, REGHOLD, 0x00);
-        if (err) {
-            dev_err(dev, "%s: GRP_PARAM_HOLD erroror\n", __func__);
-            return err;
-        }
-    }
+	if (!s_data->group_hold_active){
+		err = imx485_write_reg_broadcast(s_data, REGHOLD, 0x00);
+		if (err) {
+			dev_err(dev, "%s: GRP_PARAM_HOLD erroror\n", __func__);
+			return err;
+		}
+	}
 
-    return err;
+	return err;
 }
 
 static int imx485_write_table(struct imx485 *priv,
@@ -338,15 +340,31 @@ static int imx485_set_group_hold(struct tegracam_device *tc_dev, bool val)
 	struct device *dev = tc_dev->dev;
 	int err;
 
-    s_data->group_hold_active = val;
+	s_data->group_hold_active = val;
 
-    err = imx485_write_reg(s_data, REGHOLD, val);
-    if (err) {
-        dev_err(dev, "%s: GRP_PARAM_HOLD error\n", __func__);
-        return err;
-    }
+	err = imx485_write_reg(s_data, REGHOLD, val);
+	if (err) {
+		dev_err(dev, "%s: GRP_PARAM_HOLD error\n", __func__);
+		return err;
+	}
 
 	return err;
+}
+
+static int imx485_update_ctrl(struct tegracam_device *tc_dev, u64 val)
+{
+	struct imx485 *priv = (struct imx485 *)tegracam_get_privdata(tc_dev);
+	struct v4l2_ctrl *ctrl;
+
+	/* Update Black level control*/
+	ctrl = fm_find_v4l2_ctrl(tc_dev, TEGRA_CAMERA_CID_BLACK_LEVEL);
+	if (ctrl) {
+		*ctrl->p_new.p_s64 = val;
+		*ctrl->p_cur.p_s64 = val;
+		ctrl->default_value = priv->black_level;
+	}
+
+	return 0;
 }
 
 static int imx485_set_black_level(struct tegracam_device *tc_dev, s64 val)
@@ -354,12 +372,24 @@ static int imx485_set_black_level(struct tegracam_device *tc_dev, s64 val)
 	struct camera_common_data *s_data = tc_dev->s_data;
 	struct device *dev = tc_dev->dev;
 	int err;
+	s64 black_level_reg;
 
-    err = imx485_write_buffered_reg(s_data, BLKLEVEL_LOW, 2, val);
+	switch (s_data->colorfmt->code) {
+		case MEDIA_BUS_FMT_SRGGB12_1X12:
+			black_level_reg = val >> 2;
+			break;
+		default:
+			if (val > IMX485_MAX_BLACK_LEVEL_10BIT)
+				val = IMX485_MAX_BLACK_LEVEL_10BIT;
+			err = imx485_update_ctrl(tc_dev, val);
+			black_level_reg = val;
+	}
+
+	err = imx485_write_buffered_reg(s_data, BLKLEVEL_LOW, 2, black_level_reg);
 	if (err){
-	    dev_dbg(dev, "%s: BLACK LEVEL control error\n", __func__);
-	    return err;
-    }
+		dev_dbg(dev, "%s: BLACK LEVEL control error\n", __func__);
+		return err;
+	}
 
 	dev_dbg(dev, "%s: black level: %lld\n",  __func__, val);
 
@@ -378,21 +408,21 @@ static int imx485_set_gain(struct tegracam_device *tc_dev, s64 val)
 
 	/* translate value */
 	gain = val * IMX485_MAX_GAIN_DEC /
-                 (IMX485_MAX_GAIN_DB *
-                     mode->control_properties.gain_factor);
+				 (IMX485_MAX_GAIN_DB *
+					 mode->control_properties.gain_factor);
 
 
-    if (priv->broadcast_ctrl == BROADCAST)      
-        err = imx485_broadcast_buffered_reg(s_data, 
-                                             GAIN_LOW, 2, gain);
-    else {
-        err = imx485_write_buffered_reg(s_data, 
-                                            GAIN_LOW, 2, gain);
-    }
+	if (priv->broadcast_ctrl == BROADCAST)
+		err = imx485_broadcast_buffered_reg(s_data,
+											 GAIN_LOW, 2, gain);
+	else {
+		err = imx485_write_buffered_reg(s_data,
+											GAIN_LOW, 2, gain);
+	}
 	if (err){
-	    dev_dbg(dev, "%s: GAIN control error\n", __func__);
-	    return err;
-    }
+		dev_dbg(dev, "%s: GAIN control error\n", __func__);
+		return err;
+	}
 
 	dev_dbg(dev, "%s:  gain val [%lld] reg [%d]\n",  __func__, val, gain);
 
@@ -405,54 +435,54 @@ static int imx485_set_exposure(struct tegracam_device *tc_dev, s64 val)
 	struct camera_common_data *s_data = tc_dev->s_data;
 	struct imx485 *priv = (struct imx485 *)tc_dev->priv;
 	struct device *dev = tc_dev->dev;
-    struct v4l2_ctrl *ctrl;
+	struct v4l2_ctrl *ctrl;
 	int err;
 	u32 integration_time_line;
 	u32 reg_shr0;
 
 	dev_dbg(dev, "%s: integration time: %lld [us]\n", __func__, val);
 
-    /* Check value with internal range */
-    if (val > s_data->exposure_max_range) {
-        val = s_data->exposure_max_range;
-    }
-    else if (val < s_data->exposure_min_range) {
-        val = s_data->exposure_min_range;
-    }
+	/* Check value with internal range */
+	if (val > s_data->exposure_max_range) {
+		val = s_data->exposure_max_range;
+	}
+	else if (val < s_data->exposure_min_range) {
+		val = s_data->exposure_min_range;
+	}
 
 	integration_time_line = (val * IMX485_K_FACTOR) / priv->line_time ;
 
 	reg_shr0 = priv->frame_length - integration_time_line;
 
-    /* Value must be multiple of 2 */
-    reg_shr0 = (reg_shr0 % 2) ? reg_shr0 + 1 : reg_shr0;
+	/* Value must be multiple of 2 */
+	reg_shr0 = (reg_shr0 % 2) ? reg_shr0 + 1 : reg_shr0;
 
-    if (reg_shr0 < IMX485_MIN_SHR0_LENGTH)
-        reg_shr0 = IMX485_MIN_SHR0_LENGTH;
+	if (reg_shr0 < IMX485_MIN_SHR0_LENGTH)
+		reg_shr0 = IMX485_MIN_SHR0_LENGTH;
 	else if (reg_shr0 > (priv->frame_length - IMX485_MIN_INTEGRATION_LINES))
 		reg_shr0 = priv->frame_length - IMX485_MIN_INTEGRATION_LINES;
 
-    if (priv->broadcast_ctrl == BROADCAST)        
-        err = imx485_broadcast_buffered_reg(s_data, SHR0_LOW, 3, reg_shr0);
-    else
-        err = imx485_write_buffered_reg (s_data, SHR0_LOW, 3, reg_shr0);
-    if (err) {
-        dev_err(dev, "%s: failed to set frame length\n", __func__);
-        return err;
-    }
+	if (priv->broadcast_ctrl == BROADCAST)
+		err = imx485_broadcast_buffered_reg(s_data, SHR0_LOW, 3, reg_shr0);
+	else
+		err = imx485_write_buffered_reg (s_data, SHR0_LOW, 3, reg_shr0);
+	if (err) {
+		dev_err(dev, "%s: failed to set frame length\n", __func__);
+		return err;
+	}
 
-    /* Update new ctrl value */
-    ctrl = fm_find_v4l2_ctrl(tc_dev, TEGRA_CAMERA_CID_EXPOSURE);
-    if (ctrl) {
-        /* Value could be adjusted, set the right value */
-        *ctrl->p_new.p_s64 = val;
-        /* This ctrl is affected on FRAME RATE control also */
-        *ctrl->p_cur.p_s64 = val;
-    }
+	/* Update new ctrl value */
+	ctrl = fm_find_v4l2_ctrl(tc_dev, TEGRA_CAMERA_CID_EXPOSURE);
+	if (ctrl) {
+		/* Value could be adjusted, set the right value */
+		*ctrl->p_new.p_s64 = val;
+		/* This ctrl is affected on FRAME RATE control also */
+		*ctrl->p_cur.p_s64 = val;
+	}
 
 	dev_dbg(dev,
-     "%s: set integration time: %lld [us], coarse1:%d [line], shr0: %d [line], frame length: %llu [line]\n",
-     __func__, val, integration_time_line, reg_shr0, priv->frame_length);
+	 "%s: set integration time: %lld [us], coarse1:%d [line], shr0: %d [line], frame length: %llu [line]\n",
+	 __func__, val, integration_time_line, reg_shr0, priv->frame_length);
 
 	return err;
 }
@@ -463,45 +493,45 @@ static int imx485_set_frame_rate(struct tegracam_device *tc_dev, s64 val)
 	struct imx485 *priv = (struct imx485 *)tc_dev->priv;
 	struct device *dev = tc_dev->dev;
 	int err=0;
-    u64 frame_length;
-    u64 exposure_max_range, exposure_min_range;
+	u64 frame_length;
+	u64 exposure_max_range, exposure_min_range;
 	const struct sensor_mode_properties *mode =
 		&s_data->sensor_props.sensor_modes[s_data->mode];
 
-    frame_length = (((u64)mode->control_properties.framerate_factor * 
-                              IMX485_G_FACTOR) / (val * priv->line_time));
+	frame_length = (((u64)mode->control_properties.framerate_factor *
+							  IMX485_G_FACTOR) / (val * priv->line_time));
 
-    /* Value must be multiple of 2 */
-    frame_length = (frame_length % 2) ? frame_length + 1 : frame_length;
+	/* Value must be multiple of 2 */
+	frame_length = (frame_length % 2) ? frame_length + 1 : frame_length;
 
-    if (frame_length < priv->min_frame_length)
-        frame_length = priv->min_frame_length;
-    
-    priv->frame_length = frame_length;
+	if (frame_length < priv->min_frame_length)
+		frame_length = priv->min_frame_length;
 
-    /* Update exposure range, before writing the new frame length */
-    exposure_min_range = IMX485_MIN_INTEGRATION_LINES 
-                                            * priv->line_time / IMX485_K_FACTOR; 
+	priv->frame_length = frame_length;
 
-    exposure_max_range = (priv->frame_length - IMX485_MIN_INTEGRATION_LINES) 
-                                            * priv->line_time / IMX485_K_FACTOR;
-    fm_update_ctrl_range(tc_dev, TEGRA_CAMERA_CID_EXPOSURE,
-                             exposure_min_range, exposure_max_range);
+	/* Update exposure range, before writing the new frame length */
+	exposure_min_range = IMX485_MIN_INTEGRATION_LINES
+											* priv->line_time / IMX485_K_FACTOR;
 
-    if (priv->broadcast_ctrl == BROADCAST)        
-        err = imx485_broadcast_buffered_reg(s_data,
-                                              VMAX_LOW, 3, priv->frame_length);
-    else
-        err = imx485_write_buffered_reg(s_data, 
-                                          VMAX_LOW, 3, priv->frame_length);
-    if (err) {
-        dev_err(dev, "%s: failed to set frame length\n", __func__);
-        return err;
-    }
+	exposure_max_range = (priv->frame_length - IMX485_MIN_INTEGRATION_LINES)
+											* priv->line_time / IMX485_K_FACTOR;
+	fm_update_ctrl_range(tc_dev, TEGRA_CAMERA_CID_EXPOSURE,
+							 exposure_min_range, exposure_max_range);
+
+	if (priv->broadcast_ctrl == BROADCAST)
+		err = imx485_broadcast_buffered_reg(s_data,
+											  VMAX_LOW, 3, priv->frame_length);
+	else
+		err = imx485_write_buffered_reg(s_data,
+										  VMAX_LOW, 3, priv->frame_length);
+	if (err) {
+		dev_err(dev, "%s: failed to set frame length\n", __func__);
+		return err;
+	}
 
 	dev_dbg(dev,
-        "%s: val: %lld, frame_length set: %llu\n",
-             __func__, val, priv->frame_length);
+		"%s: val: %lld, frame_length set: %llu\n",
+			 __func__, val, priv->frame_length);
 
 	return 0;
 }
@@ -514,135 +544,135 @@ static int imx485_set_test_pattern(struct tegracam_device *tc_dev, u32 val)
 {
 	struct camera_common_data *s_data = tc_dev->s_data;
 	struct imx485 *priv = (struct imx485 *)tegracam_get_privdata(tc_dev);
-	struct device *dev = tc_dev->dev; 
-    int err;
+	struct device *dev = tc_dev->dev;
+	int err;
 
-    if (val) {
-        err = imx485_write_table(priv, mode_table[IMX485_EN_PATTERN_GEN]);
-        if (err) 
-            goto fail;
-        err = imx485_write_reg(s_data, TPG_PATSEL_DUOUT, (u8)(val - 1));
-        if (err) 
-            goto fail;  
-    } else {
-        err = imx485_write_table(priv, mode_table[IMX485_DIS_PATTERN_GEN]);
-        if (err) 
-            goto fail;
-    }
+	if (val) {
+		err = imx485_write_table(priv, mode_table[IMX485_EN_PATTERN_GEN]);
+		if (err)
+			goto fail;
+		err = imx485_write_reg(s_data, TPG_PATSEL_DUOUT, (u8)(val - 1));
+		if (err)
+			goto fail;
+	} else {
+		err = imx485_write_table(priv, mode_table[IMX485_DIS_PATTERN_GEN]);
+		if (err)
+			goto fail;
+	}
 
 	dev_dbg(dev, "%s++ Test mode pattern: %u\n", __func__, val-1);
 
-    return 0;
+	return 0;
 fail:
-    dev_err(dev, "%s: error setting test pattern\n", __func__);
-    return err;
+	dev_err(dev, "%s: error setting test pattern\n", __func__);
+	return err;
 }
 
 /**
- * Update max framerate range 
+ * Update max framerate range
  */
 static int imx485_update_framerate_range(struct tegracam_device *tc_dev)
 {
 	struct camera_common_data *s_data = tc_dev->s_data;
 	struct imx485 *priv = (struct imx485 *)tegracam_get_privdata(tc_dev);
 	struct sensor_control_properties *ctrlprops = NULL;
-    u64 max_framerate;
+	u64 max_framerate;
 
-    ctrlprops = 
+	ctrlprops =
 		&s_data->sensor_props.sensor_modes[s_data->mode].control_properties;
 
-    if (imx485_is_binning_mode(s_data))
-        priv->min_frame_length =  IMX485_DEFAULT_HEIGHT 
-                                        + IMX485_MIN_FRAME_LENGTH_DELTA;
-    else
-        priv->min_frame_length = s_data->fmt_height 
-                                        + IMX485_MIN_FRAME_LENGTH_DELTA;
+	if (imx485_is_binning_mode(s_data))
+		priv->min_frame_length =  IMX485_DEFAULT_HEIGHT
+										+ IMX485_MIN_FRAME_LENGTH_DELTA;
+	else
+		priv->min_frame_length = s_data->fmt_height
+										+ IMX485_MIN_FRAME_LENGTH_DELTA;
 
-    max_framerate = (IMX485_G_FACTOR * IMX485_M_FACTOR) /
-                                     (priv->min_frame_length * priv->line_time);
-    
-    fm_update_ctrl_range(tc_dev, TEGRA_CAMERA_CID_FRAME_RATE, 
-                            ctrlprops->min_framerate, max_framerate);
+	max_framerate = (IMX485_G_FACTOR * IMX485_M_FACTOR) /
+									 (priv->min_frame_length * priv->line_time);
 
-    return 0;
+	fm_update_ctrl_range(tc_dev, TEGRA_CAMERA_CID_FRAME_RATE,
+							ctrlprops->min_framerate, max_framerate);
+
+	return 0;
 }
 
 /**
- * Set streaming mode 
+ * Set streaming mode
  */
 static int imx485_set_streaming_mode(struct tegracam_device *tc_dev, u32 val)
 {
 	struct imx485 *priv = (struct imx485 *)tc_dev->priv;
 
-    priv->current_streaming_mode = val;
+	priv->current_streaming_mode = val;
 
-    return 0;
+	return 0;
 }
 
 /**
- * Set operation mode of sensor 
+ * Set operation mode of sensor
  */
 static int imx485_set_operation_mode(struct tegracam_device *tc_dev, u32 val)
 {
 	struct imx485 *priv = (struct imx485 *)tc_dev->priv;
 
-    priv->current_operation_mode = val;
-    
-    return 0;
+	priv->current_operation_mode = val;
+
+	return 0;
 }
 
 static int imx485_set_sync_feature(struct tegracam_device *tc_dev, u32 val)
 {
 	struct imx485 *priv = (struct imx485 *)tc_dev->priv;
 
-    priv->current_sync_mode = val;
+	priv->current_sync_mode = val;
 
-    return 0;
+	return 0;
 }
 
-static int imx485_set_broadcast_ctrl(struct tegracam_device *tc_dev, 
-                                        struct v4l2_ctrl *ctrl)
+static int imx485_set_broadcast_ctrl(struct tegracam_device *tc_dev,
+										struct v4l2_ctrl *ctrl)
 {
 	struct imx485 *priv = (struct imx485 *)tegracam_get_privdata(tc_dev);
 	struct device *dev = tc_dev->dev;
-    int err;
+	int err;
 
-    dev_dbg(dev, "%s++\n", __func__);
+	dev_dbg(dev, "%s++\n", __func__);
 
-    if (ctrl->flags & V4L2_CTRL_FLAG_INACTIVE) {
-        ctrl->val = UNICAST;
-        dev_info(dev, "%s: Broadcast control is inactive\n", __func__);
-        return 0;
-    }
+	if (ctrl->flags & V4L2_CTRL_FLAG_INACTIVE) {
+		ctrl->val = UNICAST;
+		dev_info(dev, "%s: Broadcast control is inactive\n", __func__);
+		return 0;
+	}
 
-    err = common_get_broadcast_client(tc_dev, ctrl, &sensor_regmap_config);  
-    if (err) {
-        return err;
-    }
+	err = common_get_broadcast_client(tc_dev, ctrl, &sensor_regmap_config);
+	if (err) {
+		return err;
+	}
 
-    priv->broadcast_ctrl =  *ctrl->p_new.p_u8;
-    imx485_configure_second_slave_address();
+	priv->broadcast_ctrl =  *ctrl->p_new.p_u8;
+	imx485_configure_second_slave_address();
 
-    return 0;
+	return 0;
 }
 
 static int imx485_set_custom_ctrls(struct v4l2_ctrl *ctrl)
 {
-    struct tegracam_ctrl_handler *handler = 
-                                container_of(ctrl->handler,
-                                    struct tegracam_ctrl_handler, ctrl_handler);
+	struct tegracam_ctrl_handler *handler =
+								container_of(ctrl->handler,
+									struct tegracam_ctrl_handler, ctrl_handler);
 	const struct tegracam_ctrl_ops *ops = handler->ctrl_ops;
 	struct tegracam_device *tc_dev = handler->tc_dev;
 	struct imx485 *priv = (struct imx485 *)tegracam_get_privdata(tc_dev);
 	int err = 0;
 
 	switch (ctrl->id) {
-    case TEGRA_CAMERA_CID_DATA_RATE:
-	    priv->data_rate = *ctrl->p_new.p_u8;
-        break;
-    case TEGRA_CAMERA_CID_TEST_PATTERN:
+	case TEGRA_CAMERA_CID_DATA_RATE:
+		priv->data_rate = *ctrl->p_new.p_u8;
+		break;
+	case TEGRA_CAMERA_CID_TEST_PATTERN:
 		err = ops->set_test_pattern(tc_dev, *ctrl->p_new.p_u32);
-        break;
+		break;
 	default:
 		pr_err("%s: unknown ctrl id.\n", __func__);
 		return -EINVAL;
@@ -658,12 +688,12 @@ static struct tegracam_ctrl_ops imx485_ctrl_ops = {
 	.set_exposure = imx485_set_exposure,
 	.set_frame_rate = imx485_set_frame_rate,
 	.set_group_hold = imx485_set_group_hold,
-    .set_test_pattern = imx485_set_test_pattern,
-    .set_streaming_mode = imx485_set_streaming_mode,
-    .set_operation_mode = imx485_set_operation_mode,
-    .set_sync_feature = imx485_set_sync_feature,
-    .set_broadcast_ctrl = imx485_set_broadcast_ctrl,
-    .set_black_level = imx485_set_black_level,
+	.set_test_pattern = imx485_set_test_pattern,
+	.set_streaming_mode = imx485_set_streaming_mode,
+	.set_operation_mode = imx485_set_operation_mode,
+	.set_sync_feature = imx485_set_sync_feature,
+	.set_broadcast_ctrl = imx485_set_broadcast_ctrl,
+	.set_black_level = imx485_set_black_level,
 };
 
 static int imx485_power_on(struct camera_common_data *s_data)
@@ -684,16 +714,16 @@ static int imx485_power_on(struct camera_common_data *s_data)
 			dev_err(dev, "%s failed.\n", __func__);
 		else
 			pw->state = SWITCH_ON;
-        mutex_unlock(&priv->pw_mutex);
+		mutex_unlock(&priv->pw_mutex);
 		return err;
 	}
 
-    if (!pw->mclk) {
-        dev_err(dev, "%s: mclk not available\n",  __func__);
+	if (!pw->mclk) {
+		dev_err(dev, "%s: mclk not available\n",  __func__);
 		goto imx485_mclk_fail;
-    }
+	}
 
-    /* Power ON sequence according to IMX485 datasheet */
+	/* Power ON sequence according to IMX485 datasheet */
 
 	if (pw->dvdd) {
 		err = regulator_enable(pw->dvdd);
@@ -712,27 +742,27 @@ static int imx485_power_on(struct camera_common_data *s_data)
 		if (err)
 			goto imx485_avdd_fail;
 	}
-    
-    usleep_range(1, 2);
+
+	usleep_range(1, 2);
 
 	if (gpio_is_valid(pw->reset_gpio))
 		fm_gpio_set(s_data, pw->reset_gpio, 1);
 
-    err = clk_prepare_enable(pw->mclk);
-    if(err) {
-        dev_err(dev, "%s: failed to enable mclk\n",  __func__);
-        return err;    
-    }
+	err = clk_prepare_enable(pw->mclk);
+	if(err) {
+		dev_err(dev, "%s: failed to enable mclk\n",  __func__);
+		return err;
+	}
 
-    /* MUST be before sleep */
-    pw->state = SWITCH_ON;
+	/* MUST be before sleep */
+	pw->state = SWITCH_ON;
 
-    /* Additional sleep required in the case of hardware power-on sequence */
-    usleep_range(40000, 41000);
+	/* Additional sleep required in the case of hardware power-on sequence */
+	usleep_range(40000, 41000);
 
-    mutex_unlock(&priv->pw_mutex);
+	mutex_unlock(&priv->pw_mutex);
 
-    imx485_configure_second_slave_address();
+	imx485_configure_second_slave_address();
 
 	return 0;
 
@@ -744,7 +774,7 @@ imx485_iovdd_fail:
 
 imx485_dvdd_fail:
 imx485_mclk_fail:
-    mutex_unlock(&priv->pw_mutex);
+	mutex_unlock(&priv->pw_mutex);
 	dev_err(dev, "%s failed.\n", __func__);
 
 	return -ENODEV;
@@ -760,15 +790,15 @@ static int imx485_power_off(struct camera_common_data *s_data)
 
 	dev_dbg(dev, "%s: power off\n", __func__);
 
-    /**
-     * Put XVS & XHS pin to Hi-Z before power-off sequence, as described
-     * in the chapter "XVS/XHS IO setting" in the IMX485 Synchronizing 
-     * Sensors App Note
-     */         
-    err = imx485_write_reg(s_data, XVS_XHS_DRV, 0xF);
-    if (err) {
-        dev_err(dev, "%s: error setting XVS XHS to Hi-Z\n", __func__);       
-    }
+	/**
+	 * Put XVS & XHS pin to Hi-Z before power-off sequence, as described
+	 * in the chapter "XVS/XHS IO setting" in the IMX485 Synchronizing
+	 * Sensors App Note
+	 */
+	err = imx485_write_reg(s_data, XVS_XHS_DRV, 0xF);
+	if (err) {
+		dev_err(dev, "%s: error setting XVS XHS to Hi-Z\n", __func__);
+	}
 
 	mutex_lock(&priv->pw_mutex);
 
@@ -778,13 +808,13 @@ static int imx485_power_off(struct camera_common_data *s_data)
 			goto power_off_done;
 		else
 			dev_err(dev, "%s failed.\n", __func__);
-        mutex_unlock(&priv->pw_mutex);
+		mutex_unlock(&priv->pw_mutex);
 		return err;
 	}
 
-    /* Power OFF sequence according to IMX485 datasheet */
+	/* Power OFF sequence according to IMX485 datasheet */
 
-    clk_disable_unprepare(pw->mclk);
+	clk_disable_unprepare(pw->mclk);
 
 	if (gpio_is_valid(pw->reset_gpio))
 		fm_gpio_set(s_data, pw->reset_gpio, 0);
@@ -798,7 +828,7 @@ static int imx485_power_off(struct camera_common_data *s_data)
 
 power_off_done:
 	pw->state = SWITCH_OFF;
-    mutex_unlock(&priv->pw_mutex);
+	mutex_unlock(&priv->pw_mutex);
 
 	return 0;
 }
@@ -823,7 +853,7 @@ static int imx485_power_get(struct tegracam_device *tc_dev)
 	}
 
 	mclk_name = pdata->mclk_name ?
-		    pdata->mclk_name : "extperiph1";
+			pdata->mclk_name : "extperiph1";
 	pw->mclk = devm_clk_get(dev, mclk_name);
 	if (IS_ERR(pw->mclk)) {
 		dev_err(dev, "unable to get clock %s\n", mclk_name);
@@ -884,21 +914,21 @@ static int imx485_power_put(struct tegracam_device *tc_dev)
 	if (unlikely(!pw))
 		return -EFAULT;
 
-    if (likely(pw->avdd)) {
-        regulator_put(pw->avdd);
-    }
+	if (likely(pw->avdd)) {
+		regulator_put(pw->avdd);
+	}
 
-    if (likely(pw->iovdd)) {
-        regulator_put(pw->iovdd);
-    }
+	if (likely(pw->iovdd)) {
+		regulator_put(pw->iovdd);
+	}
 
-    if (likely(pw->dvdd)) {
-        regulator_put(pw->dvdd);
-    }
+	if (likely(pw->dvdd)) {
+		regulator_put(pw->dvdd);
+	}
 
-    pw->avdd = NULL;
-    pw->iovdd = NULL;
-    pw->dvdd = NULL;
+	pw->avdd = NULL;
+	pw->iovdd = NULL;
+	pw->dvdd = NULL;
 
 	if (pdata && pdata->use_cam_gpio)
 		cam_gpio_deregister(dev, pw->reset_gpio);
@@ -918,19 +948,27 @@ static int imx485_communication_verify(struct tegracam_device *tc_dev)
 	struct camera_common_data *s_data = tc_dev->s_data;
 	struct imx485 *priv = (struct imx485 *)tegracam_get_privdata(tc_dev);
 	struct device *dev = tc_dev->dev;
-    int err;
-    u64 vmax;
+	int err;
+	u64 vmax, black_level;
 
-    err = imx485_read_buffered_reg(s_data, VMAX_LOW, 2, &vmax);
-    if (err) {
-        dev_err(dev, "%s: failed to read VMAX\n", __func__);
-        return err;
-    }
+	err = imx485_read_buffered_reg(s_data, VMAX_LOW, 2, &vmax);
+	if (err) {
+		dev_err(dev, "%s: failed to read VMAX\n", __func__);
+		return err;
+	}
 
-    /* Initialize frame length */ 
-    priv->frame_length = vmax;
+	/* Initialize frame length */
+	priv->frame_length = vmax;
 
-    return err;
+	err = imx485_read_buffered_reg(s_data, BLKLEVEL_LOW, 2, &black_level);
+	if (err) {
+		dev_err(dev, "%s: failed to read BLKLEVEL\n", __func__);
+		return err;
+	}
+	/* Initialize black level */
+	priv->black_level = black_level;
+
+	return err;
 }
 
 static struct camera_common_pdata *imx485_parse_dt(struct tegracam_device *tc_dev)
@@ -973,12 +1011,12 @@ static struct camera_common_pdata *imx485_parse_dt(struct tegracam_device *tc_de
 	}
 	board_priv_pdata->reset_gpio = (unsigned int)gpio;
 
-    gpio = of_get_named_gpio(np, "vsync-gpios", 0);
-    if (gpio > 0) {
-        gpio_direction_input(gpio);
-    }
+	gpio = of_get_named_gpio(np, "vsync-gpios", 0);
+	if (gpio > 0) {
+		gpio_direction_input(gpio);
+	}
 
-    fm_get_gpio_ctrl(board_priv_pdata);
+	fm_get_gpio_ctrl(board_priv_pdata);
 
 	err = of_property_read_string(np, "avdd-reg",
 		&board_priv_pdata->regulators.avdd);
@@ -1001,22 +1039,22 @@ static int imx485_set_pixel_format(struct tegracam_device *tc_dev)
 {
 	struct device *dev = tc_dev->dev;
 	struct imx485 *priv = (struct imx485 *)tegracam_get_privdata(tc_dev);
-    struct camera_common_data *s_data = tc_dev->s_data;
-    int err;
+	struct camera_common_data *s_data = tc_dev->s_data;
+	int err;
 
 	switch (s_data->colorfmt->code) {
 	case MEDIA_BUS_FMT_SRGGB10_1X10:
-        err = imx485_write_table(priv, mode_table[IMX485_10BIT_MODE]);
+		err = imx485_write_table(priv, mode_table[IMX485_10BIT_MODE]);
 		break;
 	case MEDIA_BUS_FMT_SRGGB12_1X12:
-        err = imx485_write_table(priv, mode_table[IMX485_12BIT_MODE]);
+		err = imx485_write_table(priv, mode_table[IMX485_12BIT_MODE]);
 		break;
 	default:
-        dev_err(dev, "%s: unknown pixel format\n", __func__);
+		dev_err(dev, "%s: unknown pixel format\n", __func__);
 		return -EINVAL;
 	}
 
-    return err;
+	return err;
 }
 
 /**
@@ -1026,20 +1064,20 @@ static int imx485_set_csi_lane_mode(struct tegracam_device *tc_dev)
 {
 	struct camera_common_data *s_data = tc_dev->s_data;
 	struct device *dev = tc_dev->dev;
-    int err;
+	int err;
 
-    if (s_data->numlanes == IMX485_TWO_LANE_MODE) {
-        err = imx485_write_reg(s_data, LANEMODE, 1);
-        if (err) {
-            dev_err(dev, "%s: error setting two lane mode\n", __func__);
-            return err;
-        }
-    }
+	if (s_data->numlanes == IMX485_TWO_LANE_MODE) {
+		err = imx485_write_reg(s_data, LANEMODE, 1);
+		if (err) {
+			dev_err(dev, "%s: error setting two lane mode\n", __func__);
+			return err;
+		}
+	}
 
-    dev_dbg(dev, "%s: sensor is in %d CSI lane mode\n",
-                  __func__, s_data->numlanes);
+	dev_dbg(dev, "%s: sensor is in %d CSI lane mode\n",
+				  __func__, s_data->numlanes);
 
-    return 0;
+	return 0;
 }
 
 /**
@@ -1048,88 +1086,88 @@ static int imx485_set_csi_lane_mode(struct tegracam_device *tc_dev)
 static int imx485_calculate_line_time(struct tegracam_device *tc_dev)
 {
 	struct imx485 *priv = (struct imx485 *)tc_dev->priv;
-    struct camera_common_data *s_data = tc_dev->s_data;
+	struct camera_common_data *s_data = tc_dev->s_data;
 	struct device *dev = tc_dev->dev;
-    u64 hmax;
-    int err;
+	u64 hmax;
+	int err;
 
 	dev_dbg(dev, "%s:++\n", __func__);
 
-    err = imx485_read_buffered_reg(s_data, HMAX_LOW, 2, &hmax);
-    if (err) {
-        dev_err(dev, "%s: unable to read hmax\n", __func__);
-        return err;
-    }
-    
-    priv->line_time = (hmax*IMX485_G_FACTOR) / (IMX485_INCK);
-    
-	dev_dbg(dev, "%s: hmax: %llu [inck], INCK: %u [Hz], line_time: %u [ns]\n",
-            __func__, hmax, s_data->def_clk_freq, priv->line_time);
+	err = imx485_read_buffered_reg(s_data, HMAX_LOW, 2, &hmax);
+	if (err) {
+		dev_err(dev, "%s: unable to read hmax\n", __func__);
+		return err;
+	}
 
-    return 0;
+	priv->line_time = (hmax*IMX485_G_FACTOR) / (IMX485_INCK);
+
+	dev_dbg(dev, "%s: hmax: %llu [inck], INCK: %u [Hz], line_time: %u [ns]\n",
+			__func__, hmax, s_data->def_clk_freq, priv->line_time);
+
+	return 0;
 }
 
 /**
- * Adjust HMAX register, and other properties for selected data rate  
+ * Adjust HMAX register, and other properties for selected data rate
  */
 static int imx485_adjust_hmax_register(struct tegracam_device *tc_dev)
 {
 	struct camera_common_data *s_data = tc_dev->s_data;
 	struct imx485 *priv = (struct imx485 *)tegracam_get_privdata(tc_dev);
 	struct device *dev = tc_dev->dev;
-    int err;
-    u64 hmax = 0x226;
-    u8 csi_lane_coef = IMX485_4_CSI_LANES / s_data->numlanes;
+	int err;
+	u64 hmax = 0x226;
+	u8 csi_lane_coef = IMX485_4_CSI_LANES / s_data->numlanes;
 
 	dev_dbg(dev, "%s:++\n", __func__);
 
-    switch (priv->data_rate) {
-    case IMX485_1782_MBPS:
-        if (s_data->numlanes == 2)
-            if (imx485_is_binning_mode(s_data)) {
-                hmax = 0x10C * csi_lane_coef;
-            }
-            else if (s_data->colorfmt->code == MEDIA_BUS_FMT_SRGGB10_1X10) {
-                hmax = 0x1B0 * csi_lane_coef;
-            } else {
-                hmax = 0x200 * csi_lane_coef;
-            }
-        else {
-            if (s_data->colorfmt->code == MEDIA_BUS_FMT_SRGGB10_1X10) {
-                hmax = 0x1C6 * csi_lane_coef;
-            } else {
-                hmax = 0x226 * csi_lane_coef;
-            }
-        }
-        break;    
+	switch (priv->data_rate) {
+	case IMX485_1782_MBPS:
+		if (s_data->numlanes == 2)
+			if (imx485_is_binning_mode(s_data)) {
+				hmax = 0x10C * csi_lane_coef;
+			}
+			else if (s_data->colorfmt->code == MEDIA_BUS_FMT_SRGGB10_1X10) {
+				hmax = 0x1B0 * csi_lane_coef;
+			} else {
+				hmax = 0x200 * csi_lane_coef;
+			}
+		else {
+			if (s_data->colorfmt->code == MEDIA_BUS_FMT_SRGGB10_1X10) {
+				hmax = 0x1C6 * csi_lane_coef;
+			} else {
+				hmax = 0x226 * csi_lane_coef;
+			}
+		}
+		break;
 
-    case IMX485_1440_MBPS:
-            hmax = 0x16E * csi_lane_coef;
-            if (!imx485_is_binning_mode(s_data)) {
-                if (s_data->colorfmt->code == MEDIA_BUS_FMT_SRGGB12_1X12) 
-                    hmax = 0x44C;
-                else
-                    hmax = 0x226 * csi_lane_coef;
-            }
-        break;
-    default:
-        /* Adjusment isn't needed */
-        return 0;
-    }
+	case IMX485_1440_MBPS:
+			hmax = 0x16E * csi_lane_coef;
+			if (!imx485_is_binning_mode(s_data)) {
+				if (s_data->colorfmt->code == MEDIA_BUS_FMT_SRGGB12_1X12)
+					hmax = 0x44C;
+				else
+					hmax = 0x226 * csi_lane_coef;
+			}
+		break;
+	default:
+		/* Adjusment isn't needed */
+		return 0;
+	}
 
-    err = imx485_write_buffered_reg(s_data, HMAX_LOW, 2, hmax);
-    if (err) {
-        dev_err(dev, "%s: failed to set HMAX register\n", __func__);
-        return err;
-    }
+	err = imx485_write_buffered_reg(s_data, HMAX_LOW, 2, hmax);
+	if (err) {
+		dev_err(dev, "%s: failed to set HMAX register\n", __func__);
+		return err;
+	}
 
 	dev_dbg(dev, "%s:  HMAX: %llu\n", __func__, hmax);
 
-    return 0;
+	return 0;
 }
 
 /**
- * These limitation are described in the "Readout Drive mode" chapter 
+ * These limitation are described in the "Readout Drive mode" chapter
  * in the IMX485 datasheet
  */
 static int imx485_verify_data_rate(struct tegracam_device *tc_dev)
@@ -1137,27 +1175,27 @@ static int imx485_verify_data_rate(struct tegracam_device *tc_dev)
 	struct camera_common_data *s_data = tc_dev->s_data;
 	struct imx485 *priv = (struct imx485 *)tegracam_get_privdata(tc_dev);
 	struct device *dev = tc_dev->dev;
-    struct v4l2_ctrl *ctrl;
+	struct v4l2_ctrl *ctrl;
 
-    dev_dbg(dev, "%s++\n", __func__);
+	dev_dbg(dev, "%s++\n", __func__);
 
-    /* Binning mode */
-    if (imx485_is_binning_mode(s_data) ) {
-        /* Bining mode 4 CSI lanes */
-        if (s_data->numlanes != IMX485_TWO_LANE_MODE
-            && priv->data_rate == IMX485_1782_MBPS) {
-            priv->data_rate = IMX485_1440_MBPS;
-            goto modify_ctrl;
-        }
-    }
+	/* Binning mode */
+	if (imx485_is_binning_mode(s_data) ) {
+		/* Bining mode 4 CSI lanes */
+		if (s_data->numlanes != IMX485_TWO_LANE_MODE
+			&& priv->data_rate == IMX485_1782_MBPS) {
+			priv->data_rate = IMX485_1440_MBPS;
+			goto modify_ctrl;
+		}
+	}
 
-    return 0;
+	return 0;
 
 modify_ctrl:
-       dev_warn(dev, "%s: Selected data rate is not supported in this mode, switching to default!\n",  __func__);   
-    ctrl = fm_find_v4l2_ctrl(tc_dev, TEGRA_CAMERA_CID_DATA_RATE);
-    v4l2_ctrl_s_ctrl(ctrl, priv->data_rate);
-    return 0;
+	   dev_warn(dev, "%s: Selected data rate is not supported in this mode, switching to default!\n",  __func__);
+	ctrl = fm_find_v4l2_ctrl(tc_dev, TEGRA_CAMERA_CID_DATA_RATE);
+	v4l2_ctrl_s_ctrl(ctrl, priv->data_rate);
+	return 0;
 }
 
 /**
@@ -1168,49 +1206,49 @@ static int imx485_set_data_rate(struct tegracam_device *tc_dev)
 {
 	struct imx485 *priv = (struct imx485 *)tegracam_get_privdata(tc_dev);
 	struct device *dev = tc_dev->dev;
-    int err;
+	int err;
 
 	dev_dbg(dev, "%s:++\n", __func__);
-    
-    err = imx485_verify_data_rate(tc_dev);
-    if (err)
-        goto fail;
 
-    err = imx485_write_table(priv, data_rate_table[priv->data_rate]);
-    if (err) 
-        goto fail;
+	err = imx485_verify_data_rate(tc_dev);
+	if (err)
+		goto fail;
 
-    dev_dbg(dev, "%s: Data rate: %u\n", __func__, priv->data_rate);
+	err = imx485_write_table(priv, data_rate_table[priv->data_rate]);
+	if (err)
+		goto fail;
 
-    return 0;
+	dev_dbg(dev, "%s: Data rate: %u\n", __func__, priv->data_rate);
+
+	return 0;
 
 fail:
-    dev_err(dev, "%s: unable to set data rate\n", __func__);
-    return err;
+	dev_err(dev, "%s: unable to set data rate\n", __func__);
+	return err;
 }
 
 /**
- * Synchronization mode is for Master mode 
+ * Synchronization mode is for Master mode
  * Sensor can be synchronized Externaly and Internaly in Master mode
  */
 static int imx485_set_sync_mode(struct tegracam_device *tc_dev)
 {
 	struct imx485 *priv = (struct imx485 *)tc_dev->priv;
-    struct camera_common_data *s_data = tc_dev->s_data;
+	struct camera_common_data *s_data = tc_dev->s_data;
 	struct device *dev = tc_dev->dev;
-    int err;  
-    u8 extmode;
+	int err;
+	u8 extmode;
 
-    if (priv->current_sync_mode == INTERNAL_SYNC)
-        extmode = 0;
-    else
-        extmode = 1; 
+	if (priv->current_sync_mode == INTERNAL_SYNC)
+		extmode = 0;
+	else
+		extmode = 1;
 
-    err = imx485_write_reg(s_data, EXTMODE, extmode);
-    if (err)
-        dev_err(dev, "%s: error setting operation mode\n", __func__);
-        
-    return err;
+	err = imx485_write_reg(s_data, EXTMODE, extmode);
+	if (err)
+		dev_err(dev, "%s: error setting operation mode\n", __func__);
+
+	return err;
 }
 
 /**
@@ -1218,19 +1256,19 @@ static int imx485_set_sync_mode(struct tegracam_device *tc_dev)
  */
 static bool imx485_find_broadcast_sensor(struct imx485 *broadcast_private)
 {
-    struct imx485 *current_private;
+	struct imx485 *current_private;
 
-    list_for_each_entry(current_private, &imx485_sensor_list, entry) {
-    	mutex_lock(&current_private->pw_mutex);
-        if (current_private->broadcast_ctrl == BROADCAST
-            && current_private->s_data->power->state == SWITCH_ON) {         
-            mutex_unlock(&current_private->pw_mutex);
-            memcpy(broadcast_private, current_private, sizeof(*broadcast_private));
-            return true;
-        }
-        mutex_unlock(&current_private->pw_mutex);
-    }
-    return false;
+	list_for_each_entry(current_private, &imx485_sensor_list, entry) {
+		mutex_lock(&current_private->pw_mutex);
+		if (current_private->broadcast_ctrl == BROADCAST
+			&& current_private->s_data->power->state == SWITCH_ON) {
+			mutex_unlock(&current_private->pw_mutex);
+			memcpy(broadcast_private, current_private, sizeof(*broadcast_private));
+			return true;
+		}
+		mutex_unlock(&current_private->pw_mutex);
+	}
+	return false;
 }
 
 /**
@@ -1239,37 +1277,37 @@ static bool imx485_find_broadcast_sensor(struct imx485 *broadcast_private)
  */
 static void imx485_enable_second_slave_address(struct imx485 *ack_private)
 {
-    struct imx485 *current_private;
-    int err;
+	struct imx485 *current_private;
+	int err;
 
-    list_for_each_entry(current_private, &imx485_sensor_list, entry) {
-    	mutex_lock(&current_private->pw_mutex);
-        /* Continue if sensor is in Power-off state */    	 
-        if (current_private->s_data->power->state != SWITCH_ON) {
-            mutex_unlock(&current_private->pw_mutex);
-            continue;
-        }
+	list_for_each_entry(current_private, &imx485_sensor_list, entry) {
+		mutex_lock(&current_private->pw_mutex);
+		/* Continue if sensor is in Power-off state */
+		if (current_private->s_data->power->state != SWITCH_ON) {
+			mutex_unlock(&current_private->pw_mutex);
+			continue;
+		}
 
-        err = imx485_write_reg(current_private->s_data,
-                                SECOND_SLAVE_ADD, 1);
-        if (err)
-            dev_warn(&current_private->i2c_client->dev, 
-                "%s: Fail to write Second I2C register\n", __func__);
+		err = imx485_write_reg(current_private->s_data,
+								SECOND_SLAVE_ADD, 1);
+		if (err)
+			dev_warn(&current_private->i2c_client->dev,
+				"%s: Fail to write Second I2C register\n", __func__);
 
-        mutex_unlock(&current_private->pw_mutex);
+		mutex_unlock(&current_private->pw_mutex);
 
-        dev_dbg(&current_private->i2c_client->dev, 
-                "%s: Sensors 2nd slave address configured\n", __func__);
-    }
+		dev_dbg(&current_private->i2c_client->dev,
+				"%s: Sensors 2nd slave address configured\n", __func__);
+	}
 
-    err = imx485_write_reg(ack_private->s_data, 
-                                SECOND_SLAVE_ADD, 3);
-    if (err)
-        dev_warn(&ack_private->i2c_client->dev, 
-            "%s: Fail to write Second I2C register\n", __func__);
+	err = imx485_write_reg(ack_private->s_data,
+								SECOND_SLAVE_ADD, 3);
+	if (err)
+		dev_warn(&ack_private->i2c_client->dev,
+			"%s: Fail to write Second I2C register\n", __func__);
 
-    dev_dbg(&ack_private->i2c_client->dev, 
-            ": Sensors 2nd slave address configured with acknowlege\n"); 
+	dev_dbg(&ack_private->i2c_client->dev,
+			": Sensors 2nd slave address configured with acknowlege\n");
 }
 
 /**
@@ -1277,43 +1315,43 @@ static void imx485_enable_second_slave_address(struct imx485 *ack_private)
  */
 static void imx485_disable_second_slave_address(void)
 {
-    struct imx485 *current_private;
-    int err;
+	struct imx485 *current_private;
+	int err;
 
-    list_for_each_entry(current_private, &imx485_sensor_list, entry) {
-    	mutex_lock(&current_private->pw_mutex);
-        /* Continue if sensor is in Power-off state */    	 
-        if (current_private->s_data->power->state != SWITCH_ON) {
-            mutex_unlock(&current_private->pw_mutex);
-            continue;
-        }
+	list_for_each_entry(current_private, &imx485_sensor_list, entry) {
+		mutex_lock(&current_private->pw_mutex);
+		/* Continue if sensor is in Power-off state */
+		if (current_private->s_data->power->state != SWITCH_ON) {
+			mutex_unlock(&current_private->pw_mutex);
+			continue;
+		}
 
-        err = imx485_write_reg(current_private->s_data, 
-                                SECOND_SLAVE_ADD, 0);
-        if (err)
-            dev_warn(&current_private->i2c_client->dev, 
-                "%s: Fail to write Second I2C register\n", __func__);
+		err = imx485_write_reg(current_private->s_data,
+								SECOND_SLAVE_ADD, 0);
+		if (err)
+			dev_warn(&current_private->i2c_client->dev,
+				"%s: Fail to write Second I2C register\n", __func__);
 
-        mutex_unlock(&current_private->pw_mutex);
+		mutex_unlock(&current_private->pw_mutex);
 
-        dev_dbg(&current_private->i2c_client->dev, 
-                "%s: Sensors 2nd slave address disabled\n", __func__);
-    }
+		dev_dbg(&current_private->i2c_client->dev,
+				"%s: Sensors 2nd slave address disabled\n", __func__);
+	}
 }
 
 /**
  * If broadcast active, configrue 2nd slave address
- * Only one sensor can have valid 2nd slave address ACK enabled  
+ * Only one sensor can have valid 2nd slave address ACK enabled
  */
 static void imx485_configure_second_slave_address(void)
 {
-    struct imx485 broadcast_private = {};
+	struct imx485 broadcast_private = {};
 
-    if (imx485_find_broadcast_sensor(&broadcast_private)) {
-        imx485_enable_second_slave_address(&broadcast_private);
-    } else {
-        imx485_disable_second_slave_address();
-    }
+	if (imx485_find_broadcast_sensor(&broadcast_private)) {
+		imx485_enable_second_slave_address(&broadcast_private);
+	} else {
+		imx485_disable_second_slave_address();
+	}
 }
 
 /**
@@ -1329,50 +1367,50 @@ static void imx485_configure_second_slave_address(void)
 static int imx485_configure_triggering_pins(struct tegracam_device *tc_dev)
 {
 	struct imx485 *priv = (struct imx485 *)tc_dev->priv;
-    struct camera_common_data *s_data = tc_dev->s_data;
+	struct camera_common_data *s_data = tc_dev->s_data;
 	struct device *dev = tc_dev->dev;
-    int err = 0;
-    u8  xvs_xhs_drv = 0xF;
+	int err = 0;
+	u8  xvs_xhs_drv = 0xF;
 
-    switch (priv->current_operation_mode) {
-    case MASTER_MODE:
-        if (priv->current_streaming_mode == SYNC_STREAM
-            && priv->current_sync_mode == INTERNAL_SYNC) {
-            /* XVS - output, XHS - output */
-            xvs_xhs_drv = 0;
-            dev_dbg(dev, 
-                    "%s: Sensor is in Internal sync Master mode\n", __func__);
-        }
-        else {
-            /* XVS - hi-z, XHS - hi-z */
-            xvs_xhs_drv = 0xF;
-            dev_dbg(dev, 
-                    "%s: Sensor is in External sync Master mode\n", __func__);
-        }
+	switch (priv->current_operation_mode) {
+	case MASTER_MODE:
+		if (priv->current_streaming_mode == SYNC_STREAM
+			&& priv->current_sync_mode == INTERNAL_SYNC) {
+			/* XVS - output, XHS - output */
+			xvs_xhs_drv = 0;
+			dev_dbg(dev,
+					"%s: Sensor is in Internal sync Master mode\n", __func__);
+		}
+		else {
+			/* XVS - hi-z, XHS - hi-z */
+			xvs_xhs_drv = 0xF;
+			dev_dbg(dev,
+					"%s: Sensor is in External sync Master mode\n", __func__);
+		}
 
-        break;
+		break;
 
-    case SLAVE_MODE: 
-        /* XVS - hi-z, XHS - hi-z */
-        xvs_xhs_drv = 0xF;
-        dev_dbg(dev, "%s: Sensor is in Slave mode\n", __func__);
-    
-        break;
+	case SLAVE_MODE:
+		/* XVS - hi-z, XHS - hi-z */
+		xvs_xhs_drv = 0xF;
+		dev_dbg(dev, "%s: Sensor is in Slave mode\n", __func__);
 
-    default:
-        pr_err("%s: unknown synchronizing function.\n", __func__);
-        return -EINVAL;
-    }  
+		break;
 
-    err = imx485_write_reg(s_data, XVS_XHS_DRV, xvs_xhs_drv);
-    if (err) {
-        dev_err(dev, "%s: error setting Slave mode\n", __func__);  
-        return err;  
-    }
+	default:
+		pr_err("%s: unknown synchronizing function.\n", __func__);
+		return -EINVAL;
+	}
 
-    dev_dbg(dev, "%s: XVS_XHS driver register: %x\n", __func__, xvs_xhs_drv);
+	err = imx485_write_reg(s_data, XVS_XHS_DRV, xvs_xhs_drv);
+	if (err) {
+		dev_err(dev, "%s: error setting Slave mode\n", __func__);
+		return err;
+	}
 
-    return 0;
+	dev_dbg(dev, "%s: XVS_XHS driver register: %x\n", __func__, xvs_xhs_drv);
+
+	return 0;
 }
 
 /**
@@ -1382,19 +1420,19 @@ static int imx485_configure_triggering_pins(struct tegracam_device *tc_dev)
 static bool imx485_is_stream_configuration_valid(struct tegracam_device *tc_dev)
 {
 	struct imx485 *priv = (struct imx485 *)tc_dev->priv;
-    struct imx485 *current_priv;
+	struct imx485 *current_priv;
 	struct device *dev = tc_dev->dev;
-    u8 streaming_mode = priv->current_streaming_mode;
+	u8 streaming_mode = priv->current_streaming_mode;
 
-    list_for_each_entry(current_priv, &imx485_sensor_list, entry) {
-        if (streaming_mode != current_priv->current_streaming_mode) {
-            dev_err (dev,
-                   "streaming mode not compatible with other sensors, all sensors must have the same streaming mode\n");
-            return false;
-        }       
-    }
+	list_for_each_entry(current_priv, &imx485_sensor_list, entry) {
+		if (streaming_mode != current_priv->current_streaming_mode) {
+			dev_err (dev,
+				   "streaming mode not compatible with other sensors, all sensors must have the same streaming mode\n");
+			return false;
+		}
+	}
 
-    return true;
+	return true;
 }
 
 /**
@@ -1404,71 +1442,71 @@ static bool imx485_is_stream_configuration_valid(struct tegracam_device *tc_dev)
 static bool imx485_is_pin_configuration_valid(struct tegracam_device *tc_dev)
 {
 	struct imx485 *priv = (struct imx485 *)tc_dev->priv;
-    struct imx485 *current_priv; 
+	struct imx485 *current_priv;
 	struct device *dev = tc_dev->dev;
-    u8 xvs_drive = 0;
-    u8 xhs_drive = 0;
-    
-    list_for_each_entry(current_priv, &imx485_sensor_list, entry) {
-        if (current_priv->current_operation_mode == MASTER_MODE
-            && current_priv->current_sync_mode == INTERNAL_SYNC) {
-            xvs_drive++;
-            xhs_drive++;
-            dev_dbg(dev, "%s: XVS & XHS as output\n", __func__);
-        }
-    }
-    
-    if (priv->current_streaming_mode == SYNC_STREAM 
-            && (xvs_drive > 1 || xhs_drive > 1)) {
-        dev_warn(dev, "More than one XVS/XHS are configured as OUTPUT!\n");
-        return false;
-    }
-    else if (priv->current_streaming_mode == SYNC_STREAM 
-                && (xvs_drive == 0 || xhs_drive == 0)) {
-        dev_warn(dev, "Configure one sensor to drive XVS/XHS!\n");
-        return false;
-    }
-    else if (priv->current_streaming_mode == EXTERNAL_HW_SYNC_STREAM 
-                && (xvs_drive || xhs_drive)) {
-        dev_warn(dev, "Configure all XVS/XHS as INPUT pin!\n");
-        return false;
-    }
+	u8 xvs_drive = 0;
+	u8 xhs_drive = 0;
 
-    return true;
+	list_for_each_entry(current_priv, &imx485_sensor_list, entry) {
+		if (current_priv->current_operation_mode == MASTER_MODE
+			&& current_priv->current_sync_mode == INTERNAL_SYNC) {
+			xvs_drive++;
+			xhs_drive++;
+			dev_dbg(dev, "%s: XVS & XHS as output\n", __func__);
+		}
+	}
+
+	if (priv->current_streaming_mode == SYNC_STREAM
+			&& (xvs_drive > 1 || xhs_drive > 1)) {
+		dev_warn(dev, "More than one XVS/XHS are configured as OUTPUT!\n");
+		return false;
+	}
+	else if (priv->current_streaming_mode == SYNC_STREAM
+				&& (xvs_drive == 0 || xhs_drive == 0)) {
+		dev_warn(dev, "Configure one sensor to drive XVS/XHS!\n");
+		return false;
+	}
+	else if (priv->current_streaming_mode == EXTERNAL_HW_SYNC_STREAM
+				&& (xvs_drive || xhs_drive)) {
+		dev_warn(dev, "Configure all XVS/XHS as INPUT pin!\n");
+		return false;
+	}
+
+	return true;
 }
 
 /**
- * According to the V4L2 documentation, driver should not return error when 
+ * According to the V4L2 documentation, driver should not return error when
  * invalid settings are detected.
  * It should apply the settings closest to the ones that the user has requested.
  */
 int imx485_check_unsupported_mode(struct camera_common_data *s_data,
-                                     struct v4l2_mbus_framefmt *mf)
+									 struct v4l2_mbus_framefmt *mf)
 {
 	struct device *dev = s_data->dev;
-    bool unsupported_mode = false;
+	bool unsupported_mode = false;
 
 	dev_dbg(dev, "%s++\n", __func__);
 
-    /**
-     * Binning is supported only in 12 bit mode according to the chapter "Operation mode"
-     * in the IMX485 datasheet
-     */
+	/**
+	 * Binning is supported only in 12 bit mode according to the chapter "Operation mode"
+	 * in the IMX485 datasheet
+	 */
 
-    if (mf->code == MEDIA_BUS_FMT_SRGGB10_1X10 
-        && imx485_is_binning_mode(s_data)) {
-        unsupported_mode = true;
-        dev_warn(dev, 
-        "%s: selected mode is not supported with RAW10, switching to default\n",
-                  __func__);
-    }
+	if (mf->code == MEDIA_BUS_FMT_SRGGB10_1X10
+		&& imx485_is_binning_mode(s_data)) {
+		unsupported_mode = true;
+		dev_warn(dev,
+		"%s: selected mode is not supported with RAW10, switching to default\n",
+				  __func__);
+	}
 
-    if (unsupported_mode){
-        mf->width	= s_data->frmfmt[s_data->def_mode].size.width;
-        mf->height	= s_data->frmfmt[s_data->def_mode].size.height;
-    }
+	if (unsupported_mode){
+		mf->width	= s_data->frmfmt[s_data->def_mode].size.width;
+		mf->height	= s_data->frmfmt[s_data->def_mode].size.height;
+	}
 
-    return 0;
+	return 0;
 }
 
 static int imx485_set_mode(struct tegracam_device *tc_dev)
@@ -1478,77 +1516,77 @@ static int imx485_set_mode(struct tegracam_device *tc_dev)
 	struct device *dev = tc_dev->dev;
 	int err;
 
-    err = imx485_write_table(priv, mode_table[IMX485_INIT_SETTINGS]);
-    if (err) {
-        dev_err(dev, "%s: unable to initialize sensor settings\n", __func__);
-        return err;
-    }
+	err = imx485_write_table(priv, mode_table[IMX485_INIT_SETTINGS]);
+	if (err) {
+		dev_err(dev, "%s: unable to initialize sensor settings\n", __func__);
+		return err;
+	}
 
-    err = imx485_set_csi_lane_mode(tc_dev);
-    if (err) {
-        dev_err(dev, "%s: error setting CSI lane mode\n", __func__);
-        return err;
-    }
+	err = imx485_set_csi_lane_mode(tc_dev);
+	if (err) {
+		dev_err(dev, "%s: error setting CSI lane mode\n", __func__);
+		return err;
+	}
 
-    err = imx485_set_pixel_format(tc_dev);
-    if (err) {
-        dev_err(dev, "%s: unable to write format to image sensor\n", __func__);
-        return err;
-    }
+	err = imx485_set_pixel_format(tc_dev);
+	if (err) {
+		dev_err(dev, "%s: unable to write format to image sensor\n", __func__);
+		return err;
+	}
 
 	err = imx485_write_table(priv, mode_table[s_data->mode]);
 	if (err)
 		return err;
 
-    err = imx485_set_operation_mode(tc_dev, priv->current_operation_mode);
-    if (err) {
-        dev_err(dev, "%s: unable to operation mode\n", __func__);
-        return err;   
-    }
+	err = imx485_set_operation_mode(tc_dev, priv->current_operation_mode);
+	if (err) {
+		dev_err(dev, "%s: unable to operation mode\n", __func__);
+		return err;
+	}
 
-    err = imx485_set_sync_mode(tc_dev);
-    if (err) {
-        dev_err(dev, "%s: unable to set sync mode\n", __func__);
-        return err;   
-    }
-    
-    err = imx485_configure_triggering_pins(tc_dev);
-    if (err) {
-        dev_err(dev, "%s: unable configure XVS/XHS pins\n", __func__);
-        return err;   
-    }
+	err = imx485_set_sync_mode(tc_dev);
+	if (err) {
+		dev_err(dev, "%s: unable to set sync mode\n", __func__);
+		return err;
+	}
 
-    err = imx485_set_data_rate(tc_dev);
-    if (err) {
-        dev_err(dev, "%s: unable to set data rate\n", __func__);
-        return err;
-    }
+	err = imx485_configure_triggering_pins(tc_dev);
+	if (err) {
+		dev_err(dev, "%s: unable configure XVS/XHS pins\n", __func__);
+		return err;
+	}
 
-    err = imx485_adjust_hmax_register(tc_dev);
-    if (err) {
-        dev_err(dev, "%s: unable to adjust hmax\n", __func__);
-        return err;
-    }
+	err = imx485_set_data_rate(tc_dev);
+	if (err) {
+		dev_err(dev, "%s: unable to set data rate\n", __func__);
+		return err;
+	}
 
-    /* Override V4L GAIN, EXPOSURE and FRAME RATE controls */
-    s_data->override_enable = true;
+	err = imx485_adjust_hmax_register(tc_dev);
+	if (err) {
+		dev_err(dev, "%s: unable to adjust hmax\n", __func__);
+		return err;
+	}
 
-    if (!imx485_is_stream_configuration_valid(tc_dev)) {
-        dev_err(dev, "%s: illegal stream configuration detected\n", __func__);
-        return -EPERM;
-    }
+	/* Override V4L GAIN, EXPOSURE and FRAME RATE controls */
+	s_data->override_enable = true;
 
-    if (!imx485_is_pin_configuration_valid(tc_dev)) {
-        dev_err(dev, "%s: illegal pin configuration detected\n", __func__);
-        return -EPERM;
-    }
+	if (!imx485_is_stream_configuration_valid(tc_dev)) {
+		dev_err(dev, "%s: illegal stream configuration detected\n", __func__);
+		return -EPERM;
+	}
 
-    err = imx485_calculate_line_time(tc_dev);
-    if (err)
-        return err;
+	if (!imx485_is_pin_configuration_valid(tc_dev)) {
+		dev_err(dev, "%s: illegal pin configuration detected\n", __func__);
+		return -EPERM;
+	}
 
-    err = imx485_update_framerate_range(tc_dev);
-    if (err)
+	err = imx485_calculate_line_time(tc_dev);
+	if (err)
+		return err;
+
+	err = imx485_update_framerate_range(tc_dev);
+	if (err)
 		return err;
 
 	dev_dbg(dev, "%s: set mode %u\n", __func__, s_data->mode);
@@ -1582,10 +1620,10 @@ static int imx485_stop_streaming(struct tegracam_device *tc_dev)
 	 * Wait for one frame to make sure sensor is set to
 	 * software standby in V-blank
 	 *
-	 * delay = frame length rows * Tline 
+	 * delay = frame length rows * Tline
 	 */
-	usleep_range(priv->frame_length * priv->line_time / IMX485_K_FACTOR, 
-                priv->frame_length * priv->line_time / IMX485_K_FACTOR + 1000);
+	usleep_range(priv->frame_length * priv->line_time / IMX485_K_FACTOR,
+				priv->frame_length * priv->line_time / IMX485_K_FACTOR + 1000);
 
 	return 0;
 }
@@ -1604,7 +1642,7 @@ static struct camera_common_sensor_ops imx485_common_ops = {
 	.set_mode = imx485_set_mode,
 	.start_streaming = imx485_start_streaming,
 	.stop_streaming = imx485_stop_streaming,
-    .check_unsupported_mode = imx485_check_unsupported_mode,
+	.check_unsupported_mode = imx485_check_unsupported_mode,
 };
 
 
@@ -1630,20 +1668,20 @@ static int imx485_board_setup(struct imx485 *priv)
 		return err;
 	}
 
-    err = imx485_communication_verify(priv->tc_dev);
-    if (err) {
-        dev_err(dev, "%s: unable to communicate with sensor\n",  __func__);
-        goto error;
-    }
+	err = imx485_communication_verify(priv->tc_dev);
+	if (err) {
+		dev_err(dev, "%s: unable to communicate with sensor\n",  __func__);
+		goto error;
+	}
 
-    err = imx485_calculate_line_time(priv->tc_dev);
-    if (err) {
-        dev_err(dev, "%s: unable to calculate line time\n", __func__);
-        goto error;
-    }
+	err = imx485_calculate_line_time(priv->tc_dev);
+	if (err) {
+		dev_err(dev, "%s: unable to calculate line time\n", __func__);
+		goto error;
+	}
 
-    priv->min_frame_length = IMX485_DEFAULT_HEIGHT 
-                                + IMX485_MIN_FRAME_LENGTH_DELTA;
+	priv->min_frame_length = IMX485_DEFAULT_HEIGHT
+								+ IMX485_MIN_FRAME_LENGTH_DELTA;
 
 error:
 	imx485_power_off(s_data);
@@ -1671,38 +1709,38 @@ static int imx485_ctrls_init(struct tegracam_device *tc_dev)
 	struct device *dev = tc_dev->dev;
 	struct camera_common_data *s_data = priv->s_data;
 	struct v4l2_ctrl_config *ctrl_cfg;
-    struct v4l2_ctrl *ctrl;
-    struct tegracam_ctrl_handler *handler = s_data->tegracam_ctrl_hdl;
-    int numctrls;
-    int err, i;
+	struct v4l2_ctrl *ctrl;
+	struct tegracam_ctrl_handler *handler = s_data->tegracam_ctrl_hdl;
+	int numctrls;
+	int err, i;
 
-    numctrls = ARRAY_SIZE(imx485_custom_ctrl_list);
+	numctrls = ARRAY_SIZE(imx485_custom_ctrl_list);
 
-    for (i = 0; i < numctrls; i++) {
+	for (i = 0; i < numctrls; i++) {
 		ctrl_cfg = &imx485_custom_ctrl_list[i];
 
-        ctrl = v4l2_ctrl_new_custom(&handler->ctrl_handler, ctrl_cfg, NULL);
-        if (ctrl == NULL) {
-            dev_err(dev, "%s: Failed to create control %s\n", __func__, 
-                                                              ctrl_cfg->name);
-            continue;
-        }
+		ctrl = v4l2_ctrl_new_custom(&handler->ctrl_handler, ctrl_cfg, NULL);
+		if (ctrl == NULL) {
+			dev_err(dev, "%s: Failed to create control %s\n", __func__,
+															  ctrl_cfg->name);
+			continue;
+		}
 
-        if (ctrl_cfg->type == V4L2_CTRL_TYPE_STRING && 
-                ctrl_cfg->flags & V4L2_CTRL_FLAG_READ_ONLY) {
-            ctrl->p_new.p_char = devm_kzalloc(tc_dev->dev, 
-                                    ctrl_cfg->max + 1, GFP_KERNEL);
-            if (!ctrl->p_new.p_char) {
-                dev_err(dev, "%s: failed to allocate memory\n", __func__);
-                return -ENOMEM;
-            }
-        }
-        handler->ctrls[handler->numctrls + i] = ctrl;
-        dev_dbg(dev, "%s: Added custom control %s to handler index: %d\n", 
-            __func__, ctrl_cfg->name,  handler->numctrls + i);
-    }
+		if (ctrl_cfg->type == V4L2_CTRL_TYPE_STRING &&
+				ctrl_cfg->flags & V4L2_CTRL_FLAG_READ_ONLY) {
+			ctrl->p_new.p_char = devm_kzalloc(tc_dev->dev,
+									ctrl_cfg->max + 1, GFP_KERNEL);
+			if (!ctrl->p_new.p_char) {
+				dev_err(dev, "%s: failed to allocate memory\n", __func__);
+				return -ENOMEM;
+			}
+		}
+		handler->ctrls[handler->numctrls + i] = ctrl;
+		dev_dbg(dev, "%s: Added custom control %s to handler index: %d\n",
+			__func__, ctrl_cfg->name,  handler->numctrls + i);
+	}
 
-    handler->numctrls = handler->numctrls + numctrls;
+	handler->numctrls = handler->numctrls + numctrls;
 
 	err = handler->ctrl_handler.error;
 	if (err) {
@@ -1710,7 +1748,7 @@ static int imx485_ctrls_init(struct tegracam_device *tc_dev)
 		goto error;
 	}
 
-    return 0;
+	return 0;
 
 error:
 	v4l2_ctrl_handler_free(&handler->ctrl_handler);
@@ -1741,7 +1779,7 @@ static int imx485_probe(struct i2c_client *client,
 	if (!tc_dev)
 		return -ENOMEM;
 
-    mutex_init(&priv->pw_mutex);
+	mutex_init(&priv->pw_mutex);
 	priv->i2c_client = tc_dev->client = client;
 	tc_dev->dev = dev;
 	strncpy(tc_dev->name, "imx485", sizeof(tc_dev->name));
@@ -1760,21 +1798,21 @@ static int imx485_probe(struct i2c_client *client,
 	priv->subdev = &tc_dev->s_data->subdev;
 	tegracam_set_privdata(tc_dev, (void *)priv);
 
-    priv->current_streaming_mode = STANDALONE_STREAM;
-    priv->current_operation_mode = MASTER_MODE;
-    priv->current_sync_mode = EXTERNAL_SYNC;
-    priv->broadcast_ctrl = UNICAST;
-    priv->s_data->broadcast_regmap = NULL;
-    priv->s_data->blklvl_max_range = IMX485_MAX_BLACK_LEVEL;
-    
-    /* Get default device tree properties of first sensor mode */
-    ctrlprops = 
+	priv->current_streaming_mode = STANDALONE_STREAM;
+	priv->current_operation_mode = MASTER_MODE;
+	priv->current_sync_mode = EXTERNAL_SYNC;
+	priv->broadcast_ctrl = UNICAST;
+	priv->s_data->broadcast_regmap = NULL;
+	priv->s_data->blklvl_max_range = IMX485_MAX_BLACK_LEVEL_12BIT;
+
+	/* Get default device tree properties of first sensor mode */
+	ctrlprops =
 		&priv->s_data->sensor_props.sensor_modes[0].control_properties;
 
-    priv->s_data->exposure_min_range = ctrlprops->min_exp_time.val;
-    priv->s_data->exposure_max_range = ctrlprops->max_exp_time.val;
+	priv->s_data->exposure_min_range = ctrlprops->min_exp_time.val;
+	priv->s_data->exposure_max_range = ctrlprops->max_exp_time.val;
 
-    INIT_LIST_HEAD(&priv->entry);
+	INIT_LIST_HEAD(&priv->entry);
 
 	err = imx485_board_setup(priv);
 	if (err) {
@@ -1788,13 +1826,23 @@ static int imx485_probe(struct i2c_client *client,
 		return err;
 	}
 
-    err = imx485_ctrls_init(tc_dev);
+	err = imx485_ctrls_init(tc_dev);
 	if (err) {
 		dev_err(dev, "tegra camera custom ctrl init failed\n");
 		return err;
 	}
 
-    list_add_tail(&priv->entry, &imx485_sensor_list);
+	err = imx485_update_ctrl(tc_dev, priv->black_level);
+	if (err)
+		return err;
+
+	err = v4l2_async_register_subdev(priv->subdev);
+	if (err) {
+		dev_err(dev, "tegra camera subdev registration failed\n");
+		return err;
+	}
+
+	list_add_tail(&priv->entry, &imx485_sensor_list);
 
 	dev_info(dev, "Detected imx485 sensor\n");
 

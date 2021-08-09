@@ -27,6 +27,7 @@
 / {
 	tegra-camera-platform {
 		compatible = "nvidia, tegra-camera-platform";
+		status = "okay";
 
 		/**
 		* Physical settings to calculate max ISO BW

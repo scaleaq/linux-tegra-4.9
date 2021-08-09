@@ -32,8 +32,10 @@
 		#size-cells = <0>;
 		mux-gpios = <&gpio CAM_I2C_MUX0 GPIO_ACTIVE_HIGH &gpio CAM_I2C_MUX1 GPIO_ACTIVE_HIGH>;
 		i2c-parent = <&i2c7>;
+		status = "okay";
 
 		i2c@0 {
+			status = "okay";
 			reg = <3>;
 			#address-cells = <1>;
 			#size-cells = <0>;
