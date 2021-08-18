@@ -19,14 +19,14 @@
  */
 
 #include "tegra210-porg-p3448-common.dtsi"
-#include "porg-platforms/tegra210-porg-pinmux-scaleaq-carrierboard-rev1.dtsi"
-#include "porg-platforms/tegra210-porg-gpio-scaleaq-carrierboard-rev1.dtsi"
+#include "porg-platforms/tegra210-porg-pinmux-scaleaq-nano-rev2.dtsi"
+#include "porg-platforms/tegra210-porg-gpio-scaleaq-nano-rev2.dtsi"
 
 / {
 	model = "ScaleAQ Orbit Nano";
 	compatible = "nvidia,jetson-nano", "nvidia,tegra210";
 	nvidia,dtsfilename = __FILE__;
-	scaleaq,carrier_revision = "1";
+	scaleaq,carrier_revision = "2";
 
 	sdhci@700b0600 { /* SDMMC4 for EMMC */
 		status = "okay";
@@ -70,5 +70,5 @@
 };
 
 #include "porg-platforms/tegra210-tpm2-slm9670.dtsi"
-#include "porg-platforms/tegra210-porg-camera-imx482-scaleaq.dtsi"
-#include "tegra210-scaleaq-carrierboard-rev1.dtsi"
+#include "porg-platforms/tegra210-porg-camera-imx482-scaleaq-rev2.dtsi"
+#include "tegra210-scaleaq-nano-rev2.dtsi"

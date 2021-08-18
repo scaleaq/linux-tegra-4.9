@@ -19,8 +19,8 @@
  */
 
 #include "tegra210-porg-p3448-common.dtsi"
-#include "porg-platforms/tegra210-porg-pinmux-scaleaq-carrierboard-rev2.dtsi"
-#include "porg-platforms/tegra210-porg-gpio-scaleaq-carrierboard-rev2.dtsi"
+#include "porg-platforms/tegra210-porg-pinmux-scaleaq-nano-rev2.dtsi"
+#include "porg-platforms/tegra210-porg-gpio-scaleaq-nano-rev2.dtsi"
 
 / {
 	model = "ScaleAQ Orbit Nano";
@@ -70,5 +70,5 @@
 };
 
 #include "porg-platforms/tegra210-tpm2-slm9670.dtsi"
-#include "porg-platforms/tegra210-porg-camera-imx482-scaleaq-rev2.dtsi"
-#include "tegra210-scaleaq-carrierboard-rev2.dtsi"
+#include "porg-platforms/tegra210-porg-camera-imx485-scaleaq-rev2.dtsi"
+#include "tegra210-scaleaq-nano-rev2.dtsi"

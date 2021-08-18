@@ -1,6 +1,6 @@
-/* This file will be applied after tegra210-scaleaq-carrierboard-common.dtsi */
+/* This file will be applied after tegra210-scaleaq-nano-common.dtsi */
 
-#include "tegra210-scaleaq-carrierboard-common.dtsi"
+#include "tegra210-scaleaq-nano-common.dtsi"
 
 / {
 	scaleaq,carrier_revision = "1";
