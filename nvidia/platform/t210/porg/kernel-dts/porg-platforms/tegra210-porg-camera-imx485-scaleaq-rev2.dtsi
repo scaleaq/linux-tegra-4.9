@@ -506,5 +506,13 @@
 			gpios = < CAM1_PWDN 0  CAM2_PWDN 0 CAM3_PWDN 0>;
 			label = "cam1-pwdn", "cam2-pwdn", "cam3-pwdn";
 		};
+
+		camera-mux-port-0 {
+			gpio-hog;
+			output-high;
+			gpios = <CAM_I2C_MUX0 0 CAM_I2C_MUX1 0>;
+			label = "cam-mux-sel0","cam-mux-sel1";
+			status = "okay";
+		};
 	};
 };
