@@ -40,11 +40,11 @@
 #define EXTCON_USB_Host		2
 
 / {
-        model = "lanai-3636";
-        compatible = "nvidia,lanai-3636", "nvidia,tegra186";
+	model = "lanai-3636";
+	compatible = "nvidia,lanai-3636", "nvidia,tegra186";
 
-        #address-cells = <2>;
-        #size-cells = <2>;
+	#address-cells = <2>;
+	#size-cells = <2>;
 
 	serial@3100000 {
 		compatible = "nvidia,tegra20-uart", "nvidia,tegra186-hsuart";
@@ -248,4 +248,3 @@
 		status="okay";
 	};
 };
-

@@ -20,15 +20,15 @@
 
 / {
 	aliases {
-		i2c0 = &gen1_i2c;
-		i2c1 = &gen2_i2c;
-		i2c2 = &cam_i2c;
-		i2c3 = &dp_aux_ch1_i2c;
+		i2c0 = &gen1_i2c;       // i2c1
+		i2c1 = &gen2_i2c;       // i2c2?
+		i2c2 = &cam_i2c;        // i2c3 = i2c3 in pins where is I2C0???
+		i2c3 = &dp_aux_ch1_i2c; // i2c4
 		i2c4 = &pwr_i2c;
-		i2c5 = &dp_aux_ch0_i2c;
-		i2c6 = &gen7_i2c;
-		i2c7 = &gen8_i2c;
-		i2c8 = &gen9_i2c;
+		i2c5 = &dp_aux_ch0_i2c; // i2c6
+		i2c6 = &gen7_i2c;       // i2c7
+		i2c7 = &gen8_i2c;       // i2c8
+		i2c8 = &gen9_i2c;       // i2c9
 	};
 
 	gen1_i2c: i2c@3160000 {

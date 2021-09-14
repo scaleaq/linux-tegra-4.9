@@ -1,0 +1,600 @@
+/*
+ * tegra186-p3636-0001-common.dtsi : Lanai common dtsi.
+ *
+ * Copyright (c) 2020, NVIDIA CORPORATION.  All rights reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; version 2 of the License.
+ *
+ * This program is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for
+ * more details.
+ */
+
+#include <dt-bindings/types.h>
+#include <dt-bindings/gpio/tegra186-gpio.h>
+#include <dt-bindings/audio/tegra186-audio.h>
+/dts-v1/;
+
+/memreserve/ 0x80000000 0x00010000;
+
+#include <tegra186-soc/tegra186-soc-cvm.dtsi>
+#include <tegra186-soc/mods-simple-bus.dtsi>
+#include <t18x-common-platforms/tegra186-platforms-simple-bus.dtsi>
+#include <t18x-common-platforms/tegra186-thermal-userspace-alert.dtsi>
+
+//#include "common/tegra186-p3636-0001-a00-disp.dtsi"
+#include "common/tegra186-p3636-0001-a00-powermon.dtsi"
+#include "common/tegra186-p3636-0001-a00-power-tree.dtsi"
+#include "common/tegra186-p3636-0001-a00-pwm-fan.dtsi"
+#include "common/tegra186-p3636-0001-a00-thermal-fan-est.dtsi"
+#include "common/tegra186-p3636-0001-a00-eqos.dtsi"
+//#include "common/tegra186-p3636-0001-a00-audio.dtsi"
+#include "common/tegra186-p3636-0001-a00-thermal.dtsi"
+#include "common/tegra186-p3636-plugin-manager.dtsi"
+
+#define EXTCON_NONE		0
+#define EXTCON_USB		1
+#define EXTCON_USB_Host		2
+
+#define CAM0_PWDN	TEGRA_MAIN_GPIO(N, 0)
+#define CAM1_PWDN	TEGRA_MAIN_GPIO(N, 3)
+#define CAM2_PWDN	TEGRA_MAIN_GPIO(L, 2)
+#define CAM_I2C_MUX0	TEGRA_MAIN_GPIO(C, 4)
+#define CAM_I2C_MUX1	TEGRA_MAIN_GPIO(L, 3)
+
+/ {
+	model = "ScaleAQ Orbit TX2NX";
+	compatible = "nvidia,lanai-3636", "nvidia,tegra186";
+
+	#address-cells = <2>;
+	#size-cells = <2>;
+
+	eeprom-manager {
+		bus@0 {
+			/delete-node/ eeprom@1;
+		};
+	};
+
+	serial@3100000 {
+		compatible = "nvidia,tegra20-uart", "nvidia,tegra186-hsuart";
+		console-port;
+		sqa-automation-port;
+		/delete-property/ resets;
+		/delete-property/ reset-names;
+		status = "okay";
+	};
+
+	serial@3110000 {
+		compatible = "nvidia,tegra186-hsuart";
+		status = "okay";
+	};
+
+	serial@c280000 {
+		status = "disabled";
+	};
+
+	serial@3130000 {
+		compatible = "nvidia,tegra186-hsuart";
+		dma-names = "tx";
+		status = "okay";
+	};
+
+	vi-bypass@15700000{
+		compatible = "nvidia,tegra186-vi-bypass";
+		status = "okay";
+	};
+
+	tachometer@39c0000 {
+		status = "okay";
+	};
+
+	generic_pwm_tachometer {
+		pwms = <&tegra_tachometer 0 1000000>;
+		status = "okay";
+	};
+
+	pmc@c360000 {
+		nvidia,restrict-voltage-switch;
+		iopad-defaults {
+			sdmmc-io-pads {
+				pins = "sdmmc1-hv", "sdmmc2-hv", "sdmmc3-hv";
+				nvidia,enable-voltage-switching;
+			};
+		};
+	};
+
+	pmc@c370000 {
+		nvidia,invert-interrupt;
+	};
+
+	spi@3210000 {
+		status = "okay";
+
+		cs-gpios = <&tegra_main_gpio TEGRA_MAIN_GPIO(H, 3) GPIO_ACTIVE_LOW>;
+
+		slb9670: slb9670@0{
+			compatible = "infineon,slb9670";
+			reg = <0>;
+			spi-max-frequency = <20000000>;
+			status = "okay";
+			reset-gpios = <&tegra_main_gpio TEGRA_MAIN_GPIO(J, 4) GPIO_ACTIVE_LOW>;
+
+			controller-data {
+				nvidia,variable-length-transfer;
+				nvidia,rx-clk-tap-delay = <31>;
+			};
+		};
+	};
+
+	spi@3240000 {
+		status = "disabled";
+	};
+
+	// SD card
+	sdhci@3440000 {
+		status = "disabled"; // off for now
+		/delete-property/ cd-gpios;
+		/delete-property/ nvidia,cd-wakeup-capable;
+		broken-cd;
+		disable-wp;
+		no-1-8-v;
+		/delete-property/ keep-power-in-suspend;
+		/delete-property/ non-removable;
+		/delete-property/ mmc-ddr-1_8v;
+	};
+
+	/* I2C 0 - for BNO085 sensor */
+	i2c@3160000 {
+		status = "okay";
+	};
+
+	/* I2C1 - ADC reading */
+	i2c@c240000 {
+		status = "okay";
+
+		ads1115: ads1115 {
+			compatible = "ti,ads1115";
+			status = "okay";
+			#address-cells = <1>;
+			#size-cells = <0>;
+			reg = <0x48>;
+
+			/* These two channel will be availabe in hwmon module.
+			 * Check https://jumpnowtek.com/rpi/Using-ads1115-ADCs-with-Raspberry-Pis.html
+			 *   and https://github.com/raspberrypi/linux/blob/rpi-4.9.y/arch/arm/boot/dts/overlays/ads1115-overlay.dts
+			 *   and https://www.kernel.org/doc/Documentation/hwmon/ads1015
+			 * Read by command: ls /sys/class/hwmon/hwmon0/device
+			 */
+			channel_a: channel_a {
+				/* Presure sensor, 0-5V, throught divider resistors, range is 0-2.58V
+				 */
+				reg = <4>;
+				ti,gain = <1>;
+				ti,datarate = <1>;
+			};
+
+			channel_b: channel_b {
+				reg = <5>;
+				ti,gain = <1>;
+				ti,datarate = <1>;
+			};
+		};
+
+		/* Configuration for 24AA02E64 eeprom, but not sure it is correct or not
+		 * There is no reference device tree for this type of EEPROM.
+		 */
+		eeprom@50 {
+			compatible = "atmel,24c02";
+			reg = <0x50>;
+			pagesize = <8>;
+		};
+	};
+
+	/* I2C 2 - for GPIO expander */
+	i2c@c250000 {
+		status = "okay";
+
+		/* TCA9555 driver, address 0x20, interrupt GPIO10 */
+		ioex_0: gpio@20 {
+			compatible = "nxp,pca9555";
+			reg = <0x20>;
+			/* No input pins, so no interrupt definition is required */
+
+			gpio-controller;
+			#gpio-cells = <2>;
+			ngpios = <16>;
+			gpio-line-names =
+				"shdn-1", "de-1", "re-1", "485232-1", "te-1",
+				"iris-dir", "iris-en", "iris-sleep",
+				"ir-filter-en", "ir-filter-ph",
+				"", "", "", "", "", "";
+			shdn-1 {
+				gpio-hog;
+				gpios = <0 GPIO_ACTIVE_HIGH>;
+				output-low;
+				line-name = "shdn-1";
+			};
+			de-1 {
+				gpio-hog;
+				gpios = <1 GPIO_ACTIVE_HIGH>;
+				output-low;
+				line-name = "de-1";
+			};
+			re-1 {
+				gpio-hog;
+				gpios = <2 GPIO_ACTIVE_HIGH>;
+				output-low;
+				line-name = "re-1";
+			};
+			485232-1 {
+				gpio-hog;
+				gpios = <3 GPIO_ACTIVE_HIGH>;
+				output-low;
+				line-name = "485232-1";
+			};
+			te-1 {
+				gpio-hog;
+				gpios = <4 GPIO_ACTIVE_HIGH>;
+				output-low;
+				line-name = "te-1";
+			};
+			iris-dir {
+				gpio-hog;
+				gpios = <5 GPIO_ACTIVE_HIGH>;
+				output-low;
+				line-name = "iris-dir";
+			};
+			iris-en {
+				gpio-hog;
+				gpios = <6 GPIO_ACTIVE_HIGH>;
+				output-low;
+				line-name = "iris-en";
+			};
+			iris-sleep {
+				gpio-hog;
+				gpios = <7 GPIO_ACTIVE_HIGH>;
+				output-low;
+				line-name = "iris-sleep";
+			};
+			ir-filter-en {
+				gpio-hog;
+				gpios = <8 GPIO_ACTIVE_HIGH>;
+				output-low;
+				line-name = "ir-filter-en";
+			};
+			ir-filter-ph {
+				gpio-hog;
+				gpios = <9 GPIO_ACTIVE_HIGH>;
+				output-low;
+				line-name = "ir-filter-ph";
+			};
+		};
+
+		ioex_1: gpio@21 {
+			compatible = "nxp,pca9555";
+			reg = <0x21>;
+			/* No input pins, so no interrupt definition is required */
+
+			gpio-controller;
+			#gpio-cells = <2>;
+			ngpios = <16>;
+			gpio-line-names = \
+				"shdn-2", "de-2", "re-2", "485232-2", "te-2", \
+				"", "", "en-24v", \
+				"leden-1", "leden-2", "leden-3", \
+				"en-10v", "", \
+				"poe-tpl", "poe-tph", "poe-bt";
+			shdn-2 {
+				gpio-hog;
+				gpios = <0 GPIO_ACTIVE_HIGH>;
+				output-low;
+				line-name = "shdn-2";
+			};
+			de-2 {
+				gpio-hog;
+				gpios = <1 GPIO_ACTIVE_HIGH>;
+				output-low;
+				line-name = "de-2";
+			};
+			re-2 {
+				gpio-hog;
+				gpios = <2 GPIO_ACTIVE_HIGH>;
+				output-low;
+				line-name = "re-2";
+			};
+			485232-2 {
+				gpio-hog;
+				gpios = <3 GPIO_ACTIVE_HIGH>;
+				output-low;
+				line-name = "485232-2";
+			};
+			te-2 {
+				gpio-hog;
+				gpios = <4 GPIO_ACTIVE_HIGH>;
+				output-low;
+				line-name = "te-2";
+			};
+			en-24v {
+				gpio-hog;
+				gpios = <7 GPIO_ACTIVE_HIGH>;
+				output-low;
+				line-name = "en-24v";
+			};
+			leden-1 {
+				gpio-hog;
+				gpios = <8 GPIO_ACTIVE_HIGH>;
+				output-low;
+				line-name = "leden-1";
+			};
+			leden-2 {
+				gpio-hog;
+				gpios = <9 GPIO_ACTIVE_HIGH>;
+				output-low;
+				line-name = "leden-2";
+			};
+			leden-3 {
+				gpio-hog;
+				gpios = <10 GPIO_ACTIVE_HIGH>;
+				output-low;
+				line-name = "leden-3";
+			};
+			en-10v {
+				gpio-hog;
+				gpios = <11 GPIO_ACTIVE_HIGH>;
+				output-low;
+				line-name = "en-10v";
+			};
+			poe-tpl {
+				gpio-hog;
+				gpios = <13 GPIO_ACTIVE_HIGH>;
+				line-name = "poe-tpl";
+			};
+			poe-tph {
+				gpio-hog;
+				gpios = <14 GPIO_ACTIVE_HIGH>;
+				line-name = "poe-tph";
+			};
+			poe-bt {
+				gpio-hog;
+				gpios = <15 GPIO_ACTIVE_HIGH>;
+				line-name = "poe-bt";
+			};
+		};
+
+		/delete-node/ battery-charger@6b;
+	};
+
+	external-connection {
+		vbus_id_extcon: extcon@1 {
+			compatible = "extcon-gpio-states";
+			reg = <0x1>;
+			extcon-gpio,name = "VBUS";
+			extcon-gpio,wait-for-gpio-scan = <0>;
+			extcon-gpio,cable-states = <
+						    0x0 0x1
+						    0x1 0x0>;
+			gpios = <&tegra_main_gpio TEGRA_MAIN_GPIO(L, 4) 0>;
+			extcon-gpio,out-cable-names = <EXTCON_USB EXTCON_USB_Host EXTCON_NONE>;
+			wakeup-source;
+			#extcon-cells = <1>;
+		};
+	};
+
+	/* eMMC */
+	sdhci@3460000 {
+		uhs-mask = <0x0>; /*enable HS400 mode*/
+		nvidia,enable-strobe-mode;
+		nvidia,en-periodic-cflush;
+		nvidia,periodic-cflush-to = <100>;
+		nvidia,enable-hwcq;
+		mmc-hs400-enhanced-strobe;
+		status = "okay";
+	};
+
+	pwm@3280000 {
+		status = "okay";
+	};
+
+	pwm@3290000 {
+		status = "okay";
+	};
+
+	pwm@32a0000 {
+		status = "okay";
+	};
+
+	pwm@c340000 {
+		status = "okay";
+	};
+
+	soft_wdt:soft_watchdog {
+		compatible = "softdog-platform";
+		status = "okay";
+	};
+
+	mailbox@3538000 {
+		status = "okay";
+	};
+
+	xudc@3550000 {
+		extcon-cables = <&vbus_id_extcon 0>;
+		extcon-cable-names = "vbus";
+		#extcon-cells = <1>;
+	};
+
+	xhci@3530000 {
+		extcon-cables = <&vbus_id_extcon 1>;
+		extcon-cable-names = "id";
+		#extcon-cells = <1>;
+	};
+
+	bwmgr {
+		status = "okay";
+	};
+
+	tegra-hsp@3c00000 {
+		status = "okay";
+	};
+
+	tegra-hsp@b150000 {
+		status = "okay";
+	};
+
+	rtcpu@b000000 {
+		status = "okay";
+	};
+
+	nvdumper {
+		status = "disabled";
+	};
+
+	bcpu_alert: bcpu-throttle-alert {
+		status = "okay";
+	};
+
+	mcpu_alert: mcpu-throttle-alert {
+		status = "okay";
+	};
+
+	gpu_alert: gpu-throttle-alert {
+		status = "okay";
+	};
+
+	mipical {
+		status="okay";
+	};
+
+	cam_i2cmux{
+		compatible = "i2c-mux-gpio";
+		#address-cells = <1>;
+		#size-cells = <0>;
+		i2c-parent = <&cam_i2c>;
+		mux-gpios = <&tegra_main_gpio CAM_I2C_MUX0 GPIO_ACTIVE_HIGH &tegra_main_gpio CAM_I2C_MUX1 GPIO_ACTIVE_HIGH>;
+
+		i2c@0 {
+			reg = <3>;
+			#address-cells = <1>;
+			#size-cells = <0>;
+			cam_port_0@1a {
+				reset-gpios = <&tegra_main_gpio CAM0_PWDN GPIO_ACTIVE_HIGH>;
+
+				clocks = <&tegra_car TEGRA186_CLK_EXTPERIPH1>, <&tegra_car TEGRA186_CLK_PLLP_OUT0>;
+					clock-names = "extperiph1", "pllp_grtba";
+					mclk = "extperiph1";
+					clock-frequency = <37125000>;
+			};
+		};
+		i2c@1 {
+			reg = <0>;
+			#address-cells = <1>;
+			#size-cells = <0>;
+			cam_port_1@1a {
+				reset-gpios = <&tegra_main_gpio CAM1_PWDN GPIO_ACTIVE_HIGH>;
+
+				clocks = <&tegra_car TEGRA186_CLK_EXTPERIPH1>, <&tegra_car TEGRA186_CLK_PLLP_OUT0>;
+					clock-names = "extperiph1", "pllp_grtba";
+					mclk = "extperiph1";
+					clock-frequency = <37125000>;
+			};
+		};
+		i2c@2 {
+			reg = <1>;
+			#address-cells = <1>;
+			#size-cells = <0>;
+			cam_port_2@1a {
+				reset-gpios = <&tegra_main_gpio CAM2_PWDN GPIO_ACTIVE_HIGH>;
+
+				clocks = <&tegra_car TEGRA186_CLK_EXTPERIPH1>, <&tegra_car TEGRA186_CLK_PLLP_OUT0>;
+					clock-names = "extperiph1", "pllp_grtba";
+					mclk = "extperiph1";
+					clock-frequency = <37125000>;
+			};
+		};
+	};
+
+	gpio@2200000 {
+		gpio-line-names = \
+			"",            "",            "",          "",          "",           "",           "",          "",          "",          "",
+			"",            "",            "",          "",          "",           "",           "",          "BNO_RST",   "TPM_INTR",  "",
+			"CAM_I2C_SEL0","",            "",          "",          "",           "",           "",          "",          "",          "",
+			"",            "",            "",          "",          "",           "",           "",          "",          "",          "",
+			"",            "",            "",          "",          "",           "",           "",          "",          "",          "",
+			"",            "",            "",          "",          "",           "",           "",          "",          "",          "",
+			"",            "",            "",          "",          "",           "",           "",          "",          "",          "",
+			"",            "",            "",          "",          "",           "",           "TPM_RST",   "",          "",          "",
+			"",            "",            "",          "",          "",           "",           "",          "",          "BNO_BOOT",  "",
+			"CAM2_PWDN",   "CAM_I2C_SEL1","USB_VBUS",  "",          "",           "",           "",          "",          "",          "",
+			"",            "",            "",          "",          "CAM0_PWDN",  "",           "",          "CAM1_PWDN", "",          "",
+			"",            "",            "",          "",          "CAM_I2C_SCL","CAM_I2C_SDA","",          "",          "",          "",
+			"",            "",            "",          "",          "",           "",           "",          "",          "",          "",
+			"",            "",            "",          "",          "",           "",           "",          "",          "",          "",
+			"",            "",            "",          "",          "",           "",           "",          "",          "",          "",
+			"",            "",            "UARTDBG_TX","UARTDBG_RX","",           "",           "",          "",          "",          "",
+			"LED_DIM",     "",            "",          "",          "",           "IRIS_PWM",   "",          "",          "",          "",
+			"",            "",            "",          "",          "FAN_PWM",    "",           "",          "",          "",          "",
+			"",            "",            "",          "",          "",           "",           "",          "",          "FAN_TACH",  "",
+			"",            "",            "",          "",          "",           "",           "",          "",          "",          "";
+
+		bno-reset { // gpio10
+			gpio-hog;
+			output-high;
+			gpios = <TEGRA_MAIN_GPIO(C, 1) GPIO_ACTIVE_HIGH>;
+			label = "bno-reset";
+			status = "okay";
+		};
+		bno-boot { // gpio05
+			gpio-hog;
+			output-high;
+			gpios = <TEGRA_MAIN_GPIO(L, 0) GPIO_ACTIVE_HIGH>;
+			label = "bno-boot";
+			status = "okay";
+		};
+		bno-intr { // gpio11
+			gpio-hog;
+			gpios = <TEGRA_AON_GPIO(EE, 2) GPIO_ACTIVE_HIGH>;
+			label = "bno-intr";
+			status = "okay";
+		};
+
+		tpm-reset { // gpio9
+			gpio-hog;
+			output-high;
+			gpios = <TEGRA_MAIN_GPIO(J, 4) GPIO_ACTIVE_HIGH>;
+			label = "tpm-reset";
+			status = "okay";
+		};
+		tpm-intr { // gpio12
+			gpio-hog;
+			gpios = <TEGRA_MAIN_GPIO(C, 2) GPIO_ACTIVE_HIGH>;
+			label = "tpm-intr";
+			status = "okay";
+		};
+
+		camera-control-output-low {
+			gpio-hog;
+			output-low;
+			gpios = <CAM0_PWDN 0 CAM1_PWDN 0 CAM2_PWDN 0>;
+			label = "cam0-pwdn","cam1-pwdn","cam2-pwdn";
+		};
+		camera-mux-port-0 {
+			gpio-hog;
+			output-high;
+			gpios = <CAM_I2C_MUX0 0 CAM_I2C_MUX1 0>;
+			label = "cam-mux-sel0","cam-mux-sel1";
+		};
+	};
+
+	gpio@c2f0000 {
+		gpio-line-names = \
+			"",          "",          "",          "",          "",         "",         "",          "",          "",          "",
+			"",          "",          "",          "",          "",         "",         "",          "",          "",          "",
+			"",          "",          "",          "",          "",         "",         "",          "",          "",          "",
+			"",          "",          "",          "",          "",         "",         "",          "",          "",          "",
+			"",          "",          "",          "",          "",         "",         "",          "",          "",          "",
+			"BNO_INTR",  "",          "",          "",          "",         "",         "",          "",          "",          "",
+			"",          "",          "",          "",          "",         "",         "",          "",          "",          "";
+	};
+};
