@@ -54,12 +54,12 @@
  */
 LIST_HEAD(imx482_sensor_list);
 
-static int test_pattern = 0;
-module_param(test_pattern, int, 0644);
-
 /**
  * Declaration
  */
+static int tp_mode = -1;
+module_param(tp_mode, int, 0644);
+
 static void imx482_configure_second_slave_address(void);
 static int imx482_set_exposure(struct tegracam_device *tc_dev, s64 val);
 
@@ -1533,7 +1533,7 @@ static int imx482_start_streaming(struct tegracam_device *tc_dev)
 	struct device *dev = tc_dev->dev;
 	int err;
 
-	if (test_pattern > 0) {
+	if (tp_mode >= 0) {
 		err = imx482_write_table(priv,
 			mode_table[IMX482_EN_PATTERN_GEN]);
 		if (err) {
@@ -1542,9 +1542,9 @@ static int imx482_start_streaming(struct tegracam_device *tc_dev)
 		}
 
 		// Set pattern
-		err = imx482_write_reg(s_data, TPG_PATSEL_DUOUT, (u8)(test_pattern - 1 + 0x0A));
+		err = imx482_write_reg(s_data, TPG_PATSEL_DUOUT, (u8)tp_mode);
 		if (err) {
-			dev_err(dev, "%s: write test pattern value %d failed, ret %d\n", __func__, test_pattern - 1 + 0x0A, err);
+			dev_err(dev, "%s: write test pattern value %d failed, ret %d\n", __func__, tp_mode, err);
 			return err;
 		}
 	}
@@ -1565,7 +1565,10 @@ static int imx482_stop_streaming(struct tegracam_device *tc_dev)
 	err = imx482_write_table(priv, mode_table[IMX482_MODE_STOP_STREAM]);
 	if (err)
 		return err;
-
+	if (tp_mode >= 0) {
+		err = imx482_write_table(priv,
+			mode_table[IMX482_DIS_PATTERN_GEN]);
+	}
 	/*
 	 * Wait for one frame to make sure sensor is set to
 	 * software standby in V-blank

@@ -114,7 +114,7 @@
 
 #define TPG_EN_DUOUT        0x30E0
 #define TPG_PATSEL_DUOUT    0x30E2
-#define TPG_COLORWIDTH_STLINE_SEL 0x30E2
+#define TPG_COLORWIDTH_STLINE_SEL 0x30E4
 #define TESTCLKEN_MIPI      0x3110
 #define DIG_CLP_MODE        0x3258
 #define WRJ_OPEN            0x3390
@@ -438,6 +438,7 @@ static const imx485_reg mode_enable_pattern_generator[] = {
 
     {BLKLEVEL_LOW,         0x00},
     {TPG_EN_DUOUT,         0x01},
+    {TPG_PATSEL_DUOUT,     0x0A},
     {TPG_COLORWIDTH_STLINE_SEL,         0x00},
     {TESTCLKEN_MIPI,       0x20},
     {DIG_CLP_MODE,         0x00},

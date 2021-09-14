@@ -58,6 +58,9 @@ LIST_HEAD(imx485_sensor_list);
 /**
  * Declaration
  */
+static int tp_mode = -1;
+module_param(tp_mode, int, 0644);
+
 static void imx485_configure_second_slave_address(void);
 static int imx485_set_exposure(struct tegracam_device *tc_dev, s64 val);
 
@@ -1597,7 +1600,16 @@ static int imx485_set_mode(struct tegracam_device *tc_dev)
 static int imx485_start_streaming(struct tegracam_device *tc_dev)
 {
 	struct imx485 *priv = (struct imx485 *)tegracam_get_privdata(tc_dev);
-	int err;
+	int err = 0;
+
+	if (tp_mode >= 0) {
+		err = imx485_write_table(priv,
+			mode_table[IMX485_EN_PATTERN_GEN]);
+		if (err) {
+			dev_err(tc_dev->dev, "%s: set pattern generation table failed\n", __func__);
+		}
+		err = imx485_write_reg(tc_dev->s_data, TPG_PATSEL_DUOUT, tp_mode);
+	}
 
 	err = imx485_write_table(priv,
 		mode_table[IMX485_MODE_START_STREAM]);
@@ -1615,6 +1627,9 @@ static int imx485_stop_streaming(struct tegracam_device *tc_dev)
 	err = imx485_write_table(priv, mode_table[IMX485_MODE_STOP_STREAM]);
 	if (err)
 		return err;
+	if (tp_mode >= 0) {
+		err = imx485_write_table(priv, mode_table[IMX485_DIS_PATTERN_GEN]);
+	}
 
 	/*
 	 * Wait for one frame to make sure sensor is set to
