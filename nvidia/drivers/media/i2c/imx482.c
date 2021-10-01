@@ -358,7 +358,7 @@ static int imx482_set_black_level(struct tegracam_device *tc_dev, s64 val)
 
 	switch (s_data->colorfmt->code) {
 		case MEDIA_BUS_FMT_SRGGB12_1X12:
-		    black_level_reg = val >> 2;
+		    black_level_reg = val;
 			break;
 		default:
 			if (val > IMX482_MAX_BLACK_LEVEL)
