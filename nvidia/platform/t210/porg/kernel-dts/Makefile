@@ -42,8 +42,10 @@ dtb-$(CONFIG_ARCH_TEGRA_210_SOC) += tegra210-orbit-nano-sd-rev2-imx482.dtb
 dtb-$(CONFIG_ARCH_TEGRA_210_SOC) += tegra210-orbit-nano-sd-rev2-imx485.dtb
 dtb-$(CONFIG_ARCH_TEGRA_210_SOC) += tegra210-orbit-nano-rev3-imx482.dtb
 dtb-$(CONFIG_ARCH_TEGRA_210_SOC) += tegra210-orbit-nano-rev3-imx485.dtb
+dtb-$(CONFIG_ARCH_TEGRA_210_SOC) += tegra210-orbit-nano-rev3-imx585.dtb
 dtb-$(CONFIG_ARCH_TEGRA_210_SOC) += tegra210-orbit-nano-sd-rev3-imx482.dtb
 dtb-$(CONFIG_ARCH_TEGRA_210_SOC) += tegra210-orbit-nano-sd-rev3-imx485.dtb
+dtb-$(CONFIG_ARCH_TEGRA_210_SOC) += tegra210-orbit-nano-sd-rev3-imx585.dtb
 
 ifneq ($(dtb-y),)
 dtb-y := $(addprefix $(makefile-path)/,$(dtb-y))
