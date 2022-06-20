@@ -135,14 +135,23 @@
 
 	// SD card
 	sdhci@3440000 {
-		status = "disabled"; // off for now
+		status = "okay";
 		/delete-property/ cd-gpios;
 		/delete-property/ nvidia,cd-wakeup-capable;
 		broken-cd;
 		disable-wp;
-		no-1-8-v;
-		/delete-property/ keep-power-in-suspend;
-		/delete-property/ non-removable;
+		vmmc-supply = <&spmic_sd3>;
+		nvidia,vmmc-always-on;
+		mmc-ocr-mask = <3>;
+		sd-uhs-sdr104;
+		sd-uhs-sdr50;
+		sd-uhs-sdr25;
+		sd-uhs-sdr12;
+		mmc-ddr-1_8v;
+		mmc-hs200-1_8v;
+		keep-power-in-suspend;
+		non-removable;
+		force-non-removable-rescan;
 		/delete-property/ mmc-ddr-1_8v;
 	};
 
