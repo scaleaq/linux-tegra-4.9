@@ -38,7 +38,7 @@
 					reg = <0>;
 					imx482_vi_in0: endpoint {
 						port-index = <0>;
-						bus-width = <2>;
+						bus-width = <4>;
 						remote-endpoint = <&imx482_csi_out0>;
 					};
 				};
@@ -58,7 +58,7 @@
 						reg = <0>;
 						imx482_csi_in0: endpoint@0 {
 							port-index = <0>;
-							bus-width = <2>;
+							bus-width = <4>;
 							remote-endpoint = <&imx482_out0>;
 						};
 					};
@@ -213,7 +213,7 @@
 
 				mode0 { //
 					mclk_khz = "37125";
-					num_lanes = "2";
+					num_lanes = "4";
 					tegra_sinterface = "serial_a";
 					phy_mode = "DPHY";
 					discontinuous_clk = "no";
@@ -242,7 +242,7 @@
 					max_hdr_ratio = "64";
 					framerate_factor = "1000000";
 					min_framerate = "1500000"; /* 1.5 */
-					max_framerate = "60000000"; /* 38 */
+					max_framerate = "120000000"; /* 38 */
 					step_framerate = "1";
 					default_framerate= "30000000";
 					exposure_factor = "1000000";
@@ -261,7 +261,7 @@
 						reg = <0>;
 						imx482_out0: endpoint {
 							port-index = <0>;
-							bus-width = <2>;
+							bus-width = <4>;
 							remote-endpoint = <&imx482_csi_in0>;
 						};
 					};
@@ -303,7 +303,7 @@
 		* isp_bw_margin_pct = <>;
 		* Isp bandwidth margin in percentage
 		*/
-		num_csi_lanes = <4>;
+		num_csi_lanes = <8>;
 		max_lane_speed = <1500000>;
 		min_bits_per_pixel = <10>;
 		vi_peak_byte_per_pixel = <2>;
