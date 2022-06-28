@@ -16,6 +16,9 @@
 #include "common/tegra186-p3509-0000-cvb.dtsi"
 #include "common/tegra186-p3509-0000-a00-fixed-regulator.dtsi"
 #include "common/tegra186-p3636-0001-a00-prod.dtsi"
+/* #include "common/tegra18x-orbit_tx2nx_rev3-padvoltage-default.dtsi" */
+/* #include "common/tegra18x-orbit_tx2nx_rev3-pinmux.dtsi" */
+/* #include "common/tegra18x-orbit_tx2nx_rev3-gpio-default.dtsi" */
 #include "common/tegra186-camera-imx485.dtsi"
 
 / {

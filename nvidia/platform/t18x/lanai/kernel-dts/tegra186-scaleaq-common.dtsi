@@ -68,18 +68,16 @@
 	};
 
 	serial@3110000 {
-		compatible = "nvidia,tegra186-hsuart";
-		status = "okay";
+		status = "okay"; /* ttyTHS1 for Housing RS485 */
 	};
 
 	serial@c280000 {
-		status = "disabled";
+		status = "okay"; /* ttyTHS2 for Oxygen */
 	};
 
 	serial@3130000 {
 		compatible = "nvidia,tegra186-hsuart";
-		dma-names = "tx";
-		status = "okay";
+		status = "disabled";
 	};
 
 	vi-bypass@15700000{
