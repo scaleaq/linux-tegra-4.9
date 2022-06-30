@@ -1705,24 +1705,11 @@ error:
 	return err;
 }
 
-static int imx485_open(struct v4l2_subdev *sd, struct v4l2_subdev_fh *fh)
+static int imx485_subdev_register(struct v4l2_subdev *sd)
 {
 	struct i2c_client *client = v4l2_get_subdevdata(sd);
-
-	dev_dbg(&client->dev, "%s:\n", __func__);
-
-	return 0;
-}
-
-static const struct v4l2_subdev_internal_ops imx485_subdev_internal_ops = {
-	.open = imx485_open,
-};
-
-static int imx485_ctrls_init(struct tegracam_device *tc_dev)
-{
-	struct imx485 *priv = (struct imx485 *)tegracam_get_privdata(tc_dev);
-	struct device *dev = tc_dev->dev;
-	struct camera_common_data *s_data = priv->s_data;
+	struct camera_common_data *s_data = to_camera_common_data(&client->dev);
+	struct device *dev = s_data->dev;
 	struct v4l2_ctrl_config *ctrl_cfg;
 	struct v4l2_ctrl *ctrl;
 	struct tegracam_ctrl_handler *handler = s_data->tegracam_ctrl_hdl;
@@ -1736,15 +1723,12 @@ static int imx485_ctrls_init(struct tegracam_device *tc_dev)
 
 		ctrl = v4l2_ctrl_new_custom(&handler->ctrl_handler, ctrl_cfg, NULL);
 		if (ctrl == NULL) {
-			dev_err(dev, "%s: Failed to create control %s\n", __func__,
-															  ctrl_cfg->name);
+			dev_err(dev, "%s: Failed to create control %s\n", __func__, ctrl_cfg->name);
 			continue;
 		}
 
-		if (ctrl_cfg->type == V4L2_CTRL_TYPE_STRING &&
-				ctrl_cfg->flags & V4L2_CTRL_FLAG_READ_ONLY) {
-			ctrl->p_new.p_char = devm_kzalloc(tc_dev->dev,
-									ctrl_cfg->max + 1, GFP_KERNEL);
+		if (ctrl_cfg->type == V4L2_CTRL_TYPE_STRING && ctrl_cfg->flags & V4L2_CTRL_FLAG_READ_ONLY) {
+			ctrl->p_new.p_char = devm_kzalloc(dev, ctrl_cfg->max + 1, GFP_KERNEL);
 			if (!ctrl->p_new.p_char) {
 				dev_err(dev, "%s: failed to allocate memory\n", __func__);
 				return -ENOMEM;
@@ -1752,7 +1736,7 @@ static int imx485_ctrls_init(struct tegracam_device *tc_dev)
 		}
 		handler->ctrls[handler->numctrls + i] = ctrl;
 		dev_dbg(dev, "%s: Added custom control %s to handler index: %d\n",
-			__func__, ctrl_cfg->name,  handler->numctrls + i);
+			  __func__, ctrl_cfg->name,  handler->numctrls + i);
 	}
 
 	handler->numctrls = handler->numctrls + numctrls;
@@ -1769,6 +1753,20 @@ error:
 	v4l2_ctrl_handler_free(&handler->ctrl_handler);
 	return err;
 }
+
+static int imx485_open(struct v4l2_subdev *sd, struct v4l2_subdev_fh *fh)
+{
+	struct i2c_client *client = v4l2_get_subdevdata(sd);
+
+	dev_dbg(&client->dev, "%s:\n", __func__);
+
+	return 0;
+}
+
+static const struct v4l2_subdev_internal_ops imx485_subdev_internal_ops = {
+	.open = imx485_open,
+	.registered = imx485_subdev_register,
+};
 
 static int imx485_probe(struct i2c_client *client,
 			const struct i2c_device_id *id)
@@ -1841,21 +1839,9 @@ static int imx485_probe(struct i2c_client *client,
 		return err;
 	}
 
-	err = imx485_ctrls_init(tc_dev);
-	if (err) {
-		dev_err(dev, "tegra camera custom ctrl init failed\n");
-		return err;
-	}
-
 	err = imx485_update_ctrl(tc_dev, priv->black_level);
 	if (err)
 		return err;
-
-	err = v4l2_async_register_subdev(priv->subdev);
-	if (err) {
-		dev_err(dev, "tegra camera subdev registration failed\n");
-		return err;
-	}
 
 	list_add_tail(&priv->entry, &imx485_sensor_list);
 

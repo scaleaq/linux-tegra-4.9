@@ -326,8 +326,101 @@ static const imx585_reg imx585_mode_1928x1090_30fps[] = {
 	{IMX585_TABLE_END, 0x0000}
 };
 
-static const imx585_reg imx585_mode_3856x2180_25fps_chdr[] = {
-	// TODO: later
+static const imx585_reg imx585_mode_clear_hdr[] = {
+	{0x3015, 0x00},
+	{0x301a, 0x10},
+
+	{0x3024, 0x02},
+
+	{0x36d0, 0xa0}, // EXP_TH_H
+	{0x36d1, 0x02},
+	{0x36d4, 0x80}, // EXP_TH_L
+	{0x36d5, 0x01},
+	{0x36e2, 0x07}, // EXP_BK, LG is more than HG
+
+	// compression
+	{0x36e4, 0x00}, // CCMP2_EXP
+	{0x36e5, 0x06},
+	{0x36e6, 0x00},
+
+	{0x36e8, 0x00}, // CCMP1_EXP
+	{0x36e9, 0x04},
+	{0x36ea, 0x00},
+
+	{0x36ec, 0x01}, // ACMP2_EXP
+	{0x36ee, 0x01}, // ACMP1_EXP
+	{0x36ef, 0x01}, // CCMP_EN
+
+	{0x3930, 0x5c},
+	{0x3931, 0x00},
+	{0x3a4c, 0x61},
+	{0x3a4d, 0x02},
+	{0x3a50, 0x70},
+	{0x3a51, 0x02},
+	{0x3e10, 0x17},
+	{0x493c, 0x41},
+
+	{IMX585_TABLE_WAIT_MS, IMX585_WAIT_MS},
+	{IMX585_TABLE_END, 0x0000}
+};
+
+static const imx585_reg imx585_mode_none_hdr[] = {
+	{0x301a, 0x00},
+	{0x3024, 0x00},
+
+	{0x4231, 0x18},
+
+	{0x3930, 0x66},
+	{0x3931, 0x00},
+	{0x3a4c, 0x39},
+	{0x3a4d, 0x01},
+	{0x3a50, 0x48},
+	{0x3a51, 0x01},
+	{0x3e10, 0x10},
+	{0x493c, 0x23},
+	{0x4940, 0x23},
+
+	{IMX585_TABLE_WAIT_MS, IMX585_WAIT_MS},
+	{IMX585_TABLE_END, 0x0000}
+};
+
+static const imx585_reg imx585_mode_3856x2180_10bits[] = {
+	// 2 lanes
+	{0x3015, 0x00},
+	{0x301a, 0x00},
+	{0x3022, 0x00},
+	{0x3023, 0x00},
+	{0x3024, 0x00},
+
+	{0x3028, 0x94},
+	{0x3029, 0x11},
+	{0x302a, 0x00},
+	{0x302c, 0x94},
+	{0x302d, 0x02},
+
+	{0x3040, 0x01},
+
+	{0x3050, 0x10},
+
+	{0x3069, 0x02},
+	{0x3074, 0x63},
+	{0x3081, 0x02},
+
+	{0x30a4, 0xa0},
+	{0x30a6, 0x00},
+	{0x3460, 0x21},
+
+	{0x4231, 0x18},
+
+	{0x3930, 0x66},
+	{0x3931, 0x00},
+	{0x3a4c, 0x39},
+	{0x3a4d, 0x01},
+	{0x3a50, 0x48},
+	{0x3a51, 0x01},
+	{0x3e10, 0x10},
+	{0x493c, 0x23},
+	{0x4940, 0x23},
 
 	{IMX585_TABLE_WAIT_MS, IMX585_WAIT_MS},
 	{IMX585_TABLE_END, 0x0000}
@@ -363,17 +456,22 @@ enum {
 	IMX585_MODE_TEST_PATTERN_DIS,
 	IMX585_START_STREAM,
 	IMX585_STOP_STREAM,
+	IMX585_MODE_CLEAR_HDR,
+	IMX585_MODE_NON_HDR,
 };
 
 static const imx585_reg *mode_table[] = {
 	[IMX585_MODE_3856x2180_30FPS] = imx585_mode_3856x2180_30fps,
 	[IMX585_MODE_1928x1090_30FPS] = imx585_mode_1928x1090_30fps,
-	[IMX585_MODE_3856x2180_25FPS_CHDR] = imx585_mode_3856x2180_25fps_chdr,
+	[IMX585_MODE_3856x2180_25FPS_CHDR] = imx585_mode_3856x2180_10bits,
 	[IMX585_MODE_COMMON] = imx585_mode_common,
 	[IMX585_MODE_TEST_PATTERN_EN] = imx585_mode_pattern_enable,
 	[IMX585_MODE_TEST_PATTERN_DIS] = imx585_mode_pattern_disable,
 	[IMX585_START_STREAM] = imx585_start,
 	[IMX585_STOP_STREAM] = imx585_stop,
+
+	[IMX585_MODE_CLEAR_HDR] = imx585_mode_clear_hdr,
+	[IMX585_MODE_NON_HDR] = imx585_mode_none_hdr,
 };
 
 static const int imx585_30_fr[] = {
