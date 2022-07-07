@@ -213,6 +213,8 @@ static int extract_pixel_format(
 		*format = V4L2_PIX_FMT_SGBRG12;
 	else if (strncmp(pixel_t, "bayer_grbg12", size) == 0)
 		*format = V4L2_PIX_FMT_SGRBG12;
+	else if (strncmp(pixel_t, "bayer_rggb16", size) == 0)
+		*format = V4L2_PIX_FMT_SRGGB16;
 	else if (strncmp(pixel_t, "rgb_rgb88824", size) == 0)
 		*format = V4L2_PIX_FMT_RGB24;
 	else if (strncmp(pixel_t, "bayer_grbg12", size) == 0)
@@ -227,10 +229,15 @@ static int extract_pixel_format(
 		*format = V4L2_PIX_FMT_SGRBG8;
 	else if (strncmp(pixel_t, "bayer_wdr_pwl_rggb12", size) == 0)
 		*format = V4L2_PIX_FMT_SRGGB12;
+<<<<<<< HEAD
 	else if (strncmp(pixel_t, "bayer_wdr_pwl_gbrg12", size) == 0)
 		*format = V4L2_PIX_FMT_SGBRG12;
 	else if (strncmp(pixel_t, "bayer_wdr_pwl_grbg12", size) == 0)
 		*format = V4L2_PIX_FMT_SGRBG12;
+=======
+	else if (strncmp(pixel_t, "bayer_wdr_pwl_rggb10", size) == 0)
+		*format = V4L2_PIX_FMT_SRGGB10;
+>>>>>>> eeda98c0715c... imx585: first workable clear HDR version
 	else if (strncmp(pixel_t, "bayer_wdr_dol_rggb10", size) == 0)
 		*format = V4L2_PIX_FMT_SRGGB10;
 	else if (strncmp(pixel_t, "bayer_xbggr10p", size) == 0)

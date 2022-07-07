@@ -266,6 +266,59 @@
 					embedded_metadata_height = "1";
 				};
 
+				mode3 { //
+					mclk_khz = "37125";
+					num_lanes = "2";
+					tegra_sinterface = "serial_a";
+					phy_mode = "DPHY";
+					discontinuous_clk = "no";
+					dpcm_enable = "false";
+					cil_settletime = "0";
+					active_w = "3856";
+					active_h = "2180";
+
+					dynamic_pixel_bit_depth = "16";
+					csi_pixel_bit_depth = "10";
+					mode_type = "bayer_wdr_pwl";
+					pixel_phase = "rggb";
+
+					readout_orientation = "0";
+					line_length = "6600";
+					inherent_gain = "1";
+					mclk_multiplier = "40.40";
+					pix_clk_hz = "1500000000";
+
+					gain_factor = "10";
+					min_gain_val = "0"; /* 0dB */
+					max_gain_val = "720"; /* 72dB */
+					step_gain_val = "3"; /* 0.3 */
+					default_gain = "0";
+					min_hdr_ratio = "1";
+					max_hdr_ratio = "64";
+					framerate_factor = "1000000";
+					min_framerate = "1500000"; /* 1.5 */
+					max_framerate = "25000000"; /* 62 */
+					step_framerate = "1";
+					default_framerate= "25000000";
+					exposure_factor = "1000000";
+					min_exp_time = "27";  /* us */
+					max_exp_time = "660000"; /* us */
+					step_exp_time = "1";
+					default_exp_time = "10000";/* us */
+					embedded_metadata_height = "1";
+
+					/* WDR related settings */
+					num_control_point = "4";
+					control_point_x_0 = "0";
+					control_point_x_1 = "128";
+					control_point_x_2 = "16384";
+					control_point_x_3 = "65535";
+					control_point_y_0 = "0";
+					control_point_y_1 = "128";
+					control_point_y_2 = "512";
+					control_point_y_3 = "1023";
+				};
+
 				ports {
 					#address-cells = <1>;
 					#size-cells = <0>;

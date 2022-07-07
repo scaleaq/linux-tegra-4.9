@@ -56,7 +56,7 @@
 #define IMX585_MAX_BLACK_LEVEL_12BIT 0xFFC
 #define IMX585_MAX_BLACK_LEVEL_10BIT 0x3FF
 
-#define IMX585_MIN_SHR0_LENGTH 6
+#define IMX585_MIN_SHR0_LENGTH 8
 #define IMX585_MIN_INTEGRATION_LINES 2
 
 #define IMX585_4_CSI_LANES 4
@@ -246,7 +246,7 @@ static struct v4l2_ctrl_config imx585_custom_ctrl_list[] = {
 	},
 	{
 		.ops = &imx585_custom_ctrl_ops,
-		.id = TEGRA_CAMERA_CID_EXP_TH_L,
+		.id = TEGRA_CAMERA_CID_CCMP2_EXP,
 		.name = "CHDR CCMP2 EXP",
 		.type = V4L2_CTRL_TYPE_INTEGER64,
 		.flags = V4L2_CTRL_FLAG_SLIDER,
@@ -662,9 +662,11 @@ static int imx585_set_exposure(struct tegracam_device *tc_dev, s64 val)
 
 	// Check value with internal range
 	if (val > s_data->exposure_max_range) {
+		print_dbg("val %lld > max %lld", val, s_data->exposure_max_range);
 		val = s_data->exposure_max_range;
 	}
 	else if (val < s_data->exposure_min_range) {
+		print_dbg("val %lld < min %lld", val, s_data->exposure_min_range);
 		val = s_data->exposure_min_range;
 	}
 
@@ -695,8 +697,8 @@ static int imx585_set_exposure(struct tegracam_device *tc_dev, s64 val)
 		*ctrl->p_cur.p_s64 = val;
 	}
 
-	// print_dbg("set integration time: %lld [us], coarse1:%d [line], shr0: %d [line], frame length: %u [line]",
-	// 	val, integration_time_line, reg_shr0, priv->frame_length);
+	print_dbg("set integration time: %lld [us], coarse1:%d [line], shr0: %d [line], frame length: %u [line]",
+		val, integration_time_line, reg_shr0, priv->frame_length);
 
 	return err;
 }
@@ -768,27 +770,67 @@ static int imx585_set_custom_ctrls(struct v4l2_ctrl *ctrl)
 		break;
 	case TEGRA_CAMERA_CID_EXP_TH_H:
 		print_dbg("set EXP_TH_H: %u", *ctrl->p_new.p_u32);
+		err = imx585_write_buffered_reg(s_data, 0x36d0, 2, (*ctrl->p_new.p_u32)&0xffff);
+		if (err != 0) {
+			dev_err(tc_dev->dev, "%s: write EXP_TH_H failed, err %d", __func__, err);
+			return err;
+		}
 		break;
 	case TEGRA_CAMERA_CID_EXP_TH_L:
 		print_dbg("set EXP_TH_L: %u", *ctrl->p_new.p_u32);
+		err = imx585_write_buffered_reg(s_data, 0x36d4, 2, (*ctrl->p_new.p_u32)&0xffff);
+		if (err != 0) {
+			dev_err(tc_dev->dev, "%s: write EXP_TH_L failed, err %d", __func__, err);
+			return err;
+		}
 		break;
 	case TEGRA_CAMERA_CID_EXP_BK:
 		print_dbg("set EXP_BK: %u", *ctrl->p_new.p_u32);
+		err = imx585_write_reg(s_data, 0x36e2, (*ctrl->p_new.p_u32)&0xff);
+		if (err != 0) {
+			dev_err(tc_dev->dev, "%s: write EXP_BK failed, err %d", __func__, err);
+			return err;
+		}
 		break;
 	case TEGRA_CAMERA_CID_CCMP2_EXP:
 		print_dbg("set CCMP2_EXP: %u", *ctrl->p_new.p_u32);
+		err = imx585_write_buffered_reg(s_data, 0x36e4, 3, (*ctrl->p_new.p_u32)&0xffffff);
+		if (err != 0) {
+			dev_err(tc_dev->dev, "%s: write CCMP2_EXP failed, err %d", __func__, err);
+			return err;
+		}
 		break;
 	case TEGRA_CAMERA_CID_CCMP1_EXP:
 		print_dbg("set CCMP1_EXP: %u", *ctrl->p_new.p_u32);
+		err = imx585_write_buffered_reg(s_data, 0x36e8, 3, (*ctrl->p_new.p_u32)&0xffffff);
+		if (err != 0) {
+			dev_err(tc_dev->dev, "%s: write CCMP1_EXP failed, err %d", __func__, err);
+			return err;
+		}
 		break;
 	case TEGRA_CAMERA_CID_ACMP2_EXP:
 		print_dbg("set ACMP2_EXP: %u", *ctrl->p_new.p_u32);
+		err = imx585_write_reg(s_data, 0x36ec, (*ctrl->p_new.p_u32)&0xff);
+		if (err != 0) {
+			dev_err(tc_dev->dev, "%s: write ACMP2_EXP failed, err %d", __func__, err);
+			return err;
+		}
 		break;
 	case TEGRA_CAMERA_CID_ACMP1_EXP:
 		print_dbg("set ACMP1_EXP: %u", *ctrl->p_new.p_u32);
+		err = imx585_write_reg(s_data, 0x36ee, (*ctrl->p_new.p_u32)&0xff);
+		if (err != 0) {
+			dev_err(tc_dev->dev, "%s: write ACMP1_EXP failed, err %d", __func__, err);
+			return err;
+		}
 		break;
 	case TEGRA_CAMERA_CID_EXP_GAIN:
 		print_dbg("set EXP_GAIN: %u", *ctrl->p_new.p_u32);
+		err = imx585_write_reg(s_data, 0x3081, (*ctrl->p_new.p_u32)&0xff);
+		if (err != 0) {
+			dev_err(tc_dev->dev, "%s: write EXP_GAIN failed, err %d", __func__, err);
+			return err;
+		}
 		break;
 	default:
 		pr_err("%s: unknown ctrl id.\n", __func__);
@@ -1157,6 +1199,109 @@ static int imx585_update_framerate_range(struct tegracam_device *tc_dev)
 	return 0;
 }
 
+static int imx585_apply_controls(struct tegracam_device *tc_dev)
+{
+	struct camera_common_data *s_data = tc_dev->s_data;
+	struct v4l2_ctrl *ctrl;
+	int err = 0;
+
+	ctrl = imx585_find_v4l2_ctrl(tc_dev, TEGRA_CAMERA_CID_EXP_TH_H);
+	if (ctrl) {
+		print_dbg("set EXP_TH_H: %u", *ctrl->p_new.p_u32);
+		err = imx585_write_buffered_reg(s_data, 0x36d0, 2, (*ctrl->p_new.p_u32)&0xffff);
+		if (err != 0) {
+			dev_err(tc_dev->dev, "%s: write EXP_TH_H failed, err %d", __func__, err);
+			return err;
+		}
+	}
+
+	ctrl = imx585_find_v4l2_ctrl(tc_dev, TEGRA_CAMERA_CID_EXP_TH_L);
+	if (ctrl) {
+		print_dbg("set EXP_TH_L: %u", *ctrl->p_new.p_u32);
+		err = imx585_write_buffered_reg(s_data, 0x36d4, 2, (*ctrl->p_new.p_u32)&0xffff);
+		if (err != 0) {
+			dev_err(tc_dev->dev, "%s: write EXP_TH_L failed, err %d", __func__, err);
+			return err;
+		}
+	}
+
+	ctrl = imx585_find_v4l2_ctrl(tc_dev, TEGRA_CAMERA_CID_EXP_BK);
+	if (ctrl) {
+		print_dbg("set EXP_BK: %u", *ctrl->p_new.p_u32);
+		err = imx585_write_reg(s_data, 0x36e2, (*ctrl->p_new.p_u32)&0xff);
+		if (err != 0) {
+			dev_err(tc_dev->dev, "%s: write EXP_BK failed, err %d", __func__, err);
+			return err;
+		}
+	}
+
+	ctrl = imx585_find_v4l2_ctrl(tc_dev, TEGRA_CAMERA_CID_CCMP2_EXP);
+	if (ctrl) {
+		print_dbg("set CCMP2_EXP: %u", *ctrl->p_new.p_u32);
+		err = imx585_write_buffered_reg(s_data, 0x36e4, 3, (*ctrl->p_new.p_u32)&0xffffff);
+		if (err != 0) {
+			dev_err(tc_dev->dev, "%s: write CCMP2_EXP failed, err %d", __func__, err);
+			return err;
+		}
+	}
+
+	ctrl = imx585_find_v4l2_ctrl(tc_dev, TEGRA_CAMERA_CID_CCMP1_EXP);
+	if (ctrl) {
+		print_dbg("set CCMP1_EXP: %u", *ctrl->p_new.p_u32);
+		err = imx585_write_buffered_reg(s_data, 0x36e8, 3, (*ctrl->p_new.p_u32)&0xffffff);
+		if (err != 0) {
+			dev_err(tc_dev->dev, "%s: write CCMP1_EXP failed, err %d", __func__, err);
+			return err;
+		}
+	}
+
+	ctrl = imx585_find_v4l2_ctrl(tc_dev, TEGRA_CAMERA_CID_ACMP2_EXP);
+	if (ctrl) {
+		print_dbg("set ACMP2_EXP: %u", *ctrl->p_new.p_u32);
+		err = imx585_write_reg(s_data, 0x36ec, (*ctrl->p_new.p_u32)&0xff);
+		if (err != 0) {
+			dev_err(tc_dev->dev, "%s: write ACMP2_EXP failed, err %d", __func__, err);
+			return err;
+		}
+	}
+
+	ctrl = imx585_find_v4l2_ctrl(tc_dev, TEGRA_CAMERA_CID_ACMP1_EXP);
+	if (ctrl) {
+		print_dbg("set ACMP1_EXP: %u", *ctrl->p_new.p_u32);
+		err = imx585_write_reg(s_data, 0x36ee, (*ctrl->p_new.p_u32)&0xff);
+		if (err != 0) {
+			dev_err(tc_dev->dev, "%s: write ACMP1_EXP failed, err %d", __func__, err);
+			return err;
+		}
+	}
+
+	ctrl = imx585_find_v4l2_ctrl(tc_dev, TEGRA_CAMERA_CID_EXP_GAIN);
+	if (ctrl) {
+		print_dbg("set EXP_GAIN: %u", *ctrl->p_new.p_u32);
+		err = imx585_write_reg(s_data, 0x3081, (*ctrl->p_new.p_u32)&0xff);
+		if (err != 0) {
+			dev_err(tc_dev->dev, "%s: write EXP_GAIN failed, err %d", __func__, err);
+			return err;
+		}
+	}
+
+	ctrl = imx585_find_v4l2_ctrl(tc_dev, TEGRA_CAMERA_CID_LCG);
+	if (ctrl) {
+		print_dbg("set LCG: %u", *ctrl->p_new.p_u8);
+		if (*ctrl->p_new.p_u8) {
+			err = imx585_write_reg(s_data, 0x3030, 0);
+		} else {
+			err = imx585_write_reg(s_data, 0x3030, 1);
+		}
+		if (err) {
+			dev_err(tc_dev->dev, "%s: error writing FDG_SEL0\n", __func__);
+			return err;
+		}
+	}
+
+	return 0;
+}
+
 static int imx585_set_mode(struct tegracam_device *tc_dev)
 {
 	struct imx585 *priv = (struct imx585 *)tegracam_get_privdata(tc_dev);
@@ -1181,6 +1326,9 @@ static int imx585_set_mode(struct tegracam_device *tc_dev)
 			if (*ctrl->p_cur.p_u8) {
 				// Clear HDR enabled
 				err = imx585_write_table(priv, mode_table[IMX585_MODE_CLEAR_HDR]);
+
+				// write configuration
+				err = imx585_apply_controls(tc_dev);
 			}
 		}
 		break;
