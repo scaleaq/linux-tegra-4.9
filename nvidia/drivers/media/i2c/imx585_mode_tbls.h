@@ -279,6 +279,7 @@ static const imx585_reg imx585_mode_3856x2180_30fps[] = {
 	{0x3015, 0x02},
 	{0x301b, 0x00},
 	{0x3022, 0x02},
+	{0x3023, 0x01},
 	{0x302c, 0x4c}, // HMAX
 	{0x302d, 0x04},
 	{0x3040, 0x01},
@@ -296,6 +297,11 @@ static const imx585_reg imx585_mode_3856x2180_30fps[] = {
 	{0x493c, 0x23},
 	{0x4940, 0x23},
 
+	{0x301a, 0x00},
+	{0x3024, 0x00},
+	{0x36ef, 0x00},
+
+	{0x306A, 0x00},
 
 	{IMX585_TABLE_WAIT_MS, IMX585_WAIT_MS},
 	{IMX585_TABLE_END, 0x0000}
@@ -305,6 +311,7 @@ static const imx585_reg imx585_mode_1928x1090_30fps[] = {
 	{0x3015, 0x03},
 	{0x301b, 0x01},
 	{0x3022, 0x00},
+	{0x3023, 0x01},
 	{0x302c, 0x4c},
 	{0x302d, 0x04},
 	{0x3040, 0x01},
@@ -322,12 +329,50 @@ static const imx585_reg imx585_mode_1928x1090_30fps[] = {
 	{0x493c, 0x23},
 	{0x4940, 0x23},
 
+	{0x301a, 0x00},
+	{0x3024, 0x00},
+	{0x36ef, 0x00},
+
+	{0x306A, 0x00},
+
 	{IMX585_TABLE_WAIT_MS, IMX585_WAIT_MS},
 	{IMX585_TABLE_END, 0x0000}
 };
 
 static const imx585_reg imx585_mode_clear_hdr[] = {
-	// {0x3015, 0x00},
+	// 2 lanes
+	{0x3015, 0x00},
+	{0x3022, 0x00},
+	{0x3023, 0x00},
+
+	{0x3028, 0x94},
+	{0x3029, 0x11},
+	{0x302a, 0x00},
+	{0x302c, 0x94},
+	{0x302d, 0x02},
+
+	{0x3040, 0x01},
+
+	{0x3050, 0x10},
+
+	{0x3069, 0x02},
+	{0x3074, 0x63},
+
+	{0x306c, 0x00},
+	{0x306d, 0x00},
+
+	{0x3050, 0x92},
+	{0x3051, 0x11},
+	{0x3052, 0x00},
+
+	{0x30a4, 0xa0},
+	{0x30a6, 0x00},
+	{0x3460, 0x21},
+
+	{0x4231, 0x18},
+
+	{0x4940, 0x23},
+
 	{0x301a, 0x10},
 
 	{0x3024, 0x02},
@@ -351,7 +396,7 @@ static const imx585_reg imx585_mode_clear_hdr[] = {
 	{0x36ee, 0x05}, // ACMP1_EXP
 	{0x36ef, 0x01}, // CCMP_EN
 
-	{0x3081, 0x03}, // GAIN_EXP
+	{0x3081, 0x01}, // GAIN_EXP
 
 	// direct gain control
 	{0x306A, 0x00}, // CHDR_GAIN_EN
@@ -375,29 +420,7 @@ static const imx585_reg imx585_mode_clear_hdr[] = {
 	{IMX585_TABLE_END, 0x0000}
 };
 
-static const imx585_reg imx585_mode_none_hdr[] = {
-	{0x301a, 0x00},
-	{0x3024, 0x00},
-
-	{0x4231, 0x18},
-
-	{0x3930, 0x66},
-	{0x3931, 0x00},
-	{0x3a4c, 0x39},
-	{0x3a4d, 0x01},
-	{0x3a50, 0x48},
-	{0x3a51, 0x01},
-	{0x3e10, 0x10},
-	{0x493c, 0x23},
-
-	{0x306A, 0x00},
-	// {0x4940, 0x23},
-
-	{IMX585_TABLE_WAIT_MS, IMX585_WAIT_MS},
-	{IMX585_TABLE_END, 0x0000}
-};
-
-static const imx585_reg imx585_mode_3856x2180_10bits[] = {
+static const imx585_reg imx585_mode_3856x2180_30fps_10bits[] = {
 	// 2 lanes
 	{0x3015, 0x00},
 	{0x301a, 0x00},
@@ -434,6 +457,12 @@ static const imx585_reg imx585_mode_3856x2180_10bits[] = {
 	{0x493c, 0x23},
 	{0x4940, 0x23},
 
+	{0x301a, 0x00},
+	{0x3024, 0x00},
+	{0x36ef, 0x00},
+
+	{0x306A, 0x00},
+
 	{IMX585_TABLE_WAIT_MS, IMX585_WAIT_MS},
 	{IMX585_TABLE_END, 0x0000}
 };
@@ -462,28 +491,25 @@ static const imx585_reg imx585_mode_pattern_disable[] = {
 enum {
 	IMX585_MODE_3856x2180_30FPS,
 	IMX585_MODE_1928x1090_30FPS,
+	IMX585_MODE_3856x2180_30FPS_10B,
 	IMX585_MODE_3856x2180_25FPS_CHDR,
 	IMX585_MODE_COMMON,
 	IMX585_MODE_TEST_PATTERN_EN,
 	IMX585_MODE_TEST_PATTERN_DIS,
 	IMX585_START_STREAM,
 	IMX585_STOP_STREAM,
-	IMX585_MODE_CLEAR_HDR,
-	IMX585_MODE_NON_HDR,
 };
 
 static const imx585_reg *mode_table[] = {
 	[IMX585_MODE_3856x2180_30FPS] = imx585_mode_3856x2180_30fps,
 	[IMX585_MODE_1928x1090_30FPS] = imx585_mode_1928x1090_30fps,
-	[IMX585_MODE_3856x2180_25FPS_CHDR] = imx585_mode_3856x2180_10bits,
+	[IMX585_MODE_3856x2180_30FPS_10B] = imx585_mode_3856x2180_30fps_10bits,
+	[IMX585_MODE_3856x2180_25FPS_CHDR] = imx585_mode_clear_hdr,
 	[IMX585_MODE_COMMON] = imx585_mode_common,
 	[IMX585_MODE_TEST_PATTERN_EN] = imx585_mode_pattern_enable,
 	[IMX585_MODE_TEST_PATTERN_DIS] = imx585_mode_pattern_disable,
 	[IMX585_START_STREAM] = imx585_start,
 	[IMX585_STOP_STREAM] = imx585_stop,
-
-	[IMX585_MODE_CLEAR_HDR] = imx585_mode_clear_hdr,
-	[IMX585_MODE_NON_HDR] = imx585_mode_none_hdr,
 };
 
 static const int imx585_30_fr[] = {
@@ -496,7 +522,8 @@ static const int imx585_25_fr[] = {
 
 static const struct camera_common_frmfmt imx585_frmfmt[] = {
 	{{3856, 2180}, imx585_30_fr, 1, 0, IMX585_MODE_3856x2180_30FPS},
-	{{3856, 2180}, imx585_25_fr, 1, 0, IMX585_MODE_3856x2180_25FPS_CHDR},
 	{{1928, 1090}, imx585_30_fr, 1, 0, IMX585_MODE_1928x1090_30FPS},
+	{{3856, 2180}, imx585_30_fr, 1, 0, IMX585_MODE_3856x2180_30FPS_10B},
+	{{3856, 2180}, imx585_25_fr, 1, 1, IMX585_MODE_3856x2180_25FPS_CHDR},
 };
 #endif /* __IMX585_I2C_TABLES__ */
