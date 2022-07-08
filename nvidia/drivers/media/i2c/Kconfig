@@ -165,9 +165,18 @@ config VIDEO_IMX390
 	  To compile this driver as a module, choose M here: the module
 	  will be called imx390.
 
+config SCALEAQ_COMMON
+	tristate "ScaleAQ image sensor common stuff"
+	depends on I2C
+	---help---
+	  This is ScaleAQ image sensor common stuffs
+
+	  To compile this driver as a module, choose M here: the module
+	  will be called scaleaq_common.
+
 config VIDEO_IMX482
 	tristate "IMX482 camera sensor support"
-	depends on I2C && VIDEO_V4L2 && VIDEO_V4L2_SUBDEV_API
+	depends on I2C && VIDEO_V4L2 && VIDEO_V4L2_SUBDEV_API && SCALEAQ_COMMON
 	---help---
 	  This is a Video4Linux2 sensor-level driver for the Sony
 	  IMX482 camera sensor
@@ -177,7 +186,7 @@ config VIDEO_IMX482
 
 config VIDEO_IMX485
 	tristate "IMX485 camera sensor support"
-	depends on I2C && VIDEO_V4L2 && VIDEO_V4L2_SUBDEV_API
+	depends on I2C && VIDEO_V4L2 && VIDEO_V4L2_SUBDEV_API && SCALEAQ_COMMON
 	---help---
 	  This is a Video4Linux2 sensor-level driver for the Sony
 	  IMX485 camera sensor
@@ -196,7 +205,7 @@ config FRAMOS_COMMON
 
 config VIDEO_IMX585
 	tristate "IMX585 camera sensor support"
-	depends on I2C && VIDEO_V4L2 && VIDEO_V4L2_SUBDEV_API
+	depends on I2C && VIDEO_V4L2 && VIDEO_V4L2_SUBDEV_API && SCALEAQ_COMMON
 	---help---
 	  This driver supports IMX585 camera sensor from Sony
 

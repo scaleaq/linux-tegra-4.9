@@ -104,6 +104,7 @@
 				physical_h = "16.80";
 
 				sensor_model ="imx485";
+				temperature-addr = <0x48>;
 
 				/* Define any required hw resources needed by driver */
 				/* ie. clocks, io pins, power sources */

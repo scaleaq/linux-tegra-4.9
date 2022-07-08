@@ -38,6 +38,7 @@
 
 #include "../platform/tegra/camera/camera_gpio.h"
 #include "imx585_mode_tbls.h"
+#include "scaleaq_sensor_common.h"
 
 #define REGHOLD          0x3001
 #define GAIN_LOW         0x306c
@@ -67,18 +68,6 @@
 #define IMX585_DEFAULT_WIDTH            3856
 #define IMX585_DEFAULT_HEIGHT           2180
 #define IMX585_MIN_FRAME_LENGTH_DELTA 70
-
-#define TEGRA_CAMERA_CID_LCG                          (TEGRA_CAMERA_CID_BASE+160)
-#define TEGRA_CAMERA_CID_SENSOR_TEMPERATURE           (TEGRA_CAMERA_CID_BASE+161)
-#define TEGRA_CAMERA_CID_CLEAR_HDR_EN                 (TEGRA_CAMERA_CID_BASE+162)
-#define TEGRA_CAMERA_CID_EXP_TH_H                     (TEGRA_CAMERA_CID_BASE+163)
-#define TEGRA_CAMERA_CID_EXP_TH_L                     (TEGRA_CAMERA_CID_BASE+164)
-#define TEGRA_CAMERA_CID_EXP_BK                       (TEGRA_CAMERA_CID_BASE+165)
-#define TEGRA_CAMERA_CID_CCMP2_EXP                    (TEGRA_CAMERA_CID_BASE+166)
-#define TEGRA_CAMERA_CID_CCMP1_EXP                    (TEGRA_CAMERA_CID_BASE+167)
-#define TEGRA_CAMERA_CID_ACMP2_EXP                    (TEGRA_CAMERA_CID_BASE+168)
-#define TEGRA_CAMERA_CID_ACMP1_EXP                    (TEGRA_CAMERA_CID_BASE+169)
-#define TEGRA_CAMERA_CID_EXP_GAIN                     (TEGRA_CAMERA_CID_BASE+170)
 
 static const struct of_device_id imx585_of_match[] = {
 	{.compatible = "scaleaq,imx585",},
@@ -289,6 +278,10 @@ struct imx585 {
 	u32 line_time;
 	struct camera_common_data *s_data;
 	struct tegracam_device *tc_dev;
+
+	// Temperature sensor
+	u32 temp_sens_addr;
+	struct camera_common_eeprom_data   temp_sensor;
 };
 
 static const struct regmap_config sensor_regmap_config = {
@@ -1080,7 +1073,7 @@ static struct camera_common_pdata *imx585_parse_dt(struct tegracam_device
 	int err = 0;
 	int gpio;
 
-	print_dbg("");
+	print_dbg("priv %p", tc_dev->priv);
 
 	if (!np)
 		return NULL;
@@ -1370,8 +1363,16 @@ static int imx585_board_setup(struct imx585 *priv)
 	struct device *dev = s_data->dev;
 	u8 reg_val[2];
 	int err = 0;
+	struct device_node *np = dev->of_node;
 
 	print_dbg(" enable MCLK with %d Hz", s_data->def_clk_freq);
+
+	err = of_property_read_u32(np, "temperature-addr", &priv->temp_sens_addr);
+	if (err) {
+		dev_err(dev, "temperature-addr is missing\n");
+	} else {
+		print_dbg("temperature-addr 0x%x", priv->temp_sens_addr);
+	}
 
 	err = camera_common_mclk_enable(s_data);
 	if (err) {

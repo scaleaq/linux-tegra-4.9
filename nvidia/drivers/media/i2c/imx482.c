@@ -30,6 +30,7 @@
 
 #include "imx482_mode_tbls.h"
 #include "framos_sensor_common.h"
+#include "scaleaq_sensor_common.h"
 
 #define IMX482_K_FACTOR 1000LL
 #define IMX482_M_FACTOR 1000000LL
@@ -87,6 +88,11 @@ static const char * const imx482_test_pattern_menu[] = {
 	[2] = "V Color-bar",
 };
 
+static const char * const imx482_conversion_gain_menu[] = {
+	[0] = "Low Conversion Gain",
+	[1] = "High Conversion Gain",
+};
+
 static struct v4l2_ctrl_config imx482_custom_ctrl_list[] = {
 	{
 		.ops = &imx482_custom_ctrl_ops,
@@ -107,6 +113,27 @@ static struct v4l2_ctrl_config imx482_custom_ctrl_list[] = {
 		.max = ARRAY_SIZE(imx482_test_pattern_menu) - 1,
 		.def = 0,
 		.qmenu = imx482_test_pattern_menu,
+	},
+	{
+		.ops = &imx482_custom_ctrl_ops,
+		.id = TEGRA_CAMERA_CID_LCG,
+		.name = "Conversion Gain",
+		.type = V4L2_CTRL_TYPE_MENU,
+		.min = 0,
+		.max = ARRAY_SIZE(imx482_conversion_gain_menu) - 1,
+		.def = 0,
+		.qmenu = imx482_conversion_gain_menu,
+	},
+	{
+		.ops = &imx482_custom_ctrl_ops,
+		.id = TEGRA_CAMERA_CID_SENSOR_TEMPERATURE,
+		.name = "Sensor temperature",
+		.type = V4L2_CTRL_TYPE_INTEGER64,
+		.flags = V4L2_CTRL_FLAG_SLIDER | V4L2_CTRL_FLAG_UPDATE,
+		.def = 0,
+		.min = 0,
+		.max = 0xf4240,
+		.step = 1,
 	},
 };
 
@@ -138,6 +165,10 @@ struct imx482 {
 	struct list_head            entry;
 	struct camera_common_data   *s_data;
 	struct tegracam_device      *tc_dev;
+
+	// Temperature sensor
+	u32 temp_sens_addr;
+	struct camera_common_eeprom_data   temp_sensor;
 };
 
 static const struct regmap_config sensor_regmap_config = {
@@ -643,6 +674,7 @@ static int imx482_set_custom_ctrls(struct v4l2_ctrl *ctrl)
 	struct tegracam_device *tc_dev = handler->tc_dev;
 	struct imx482 *priv = (struct imx482 *)tegracam_get_privdata(tc_dev);
 	int err = 0;
+	struct camera_common_data *s_data = tc_dev->s_data;
 
 	switch (ctrl->id) {
 	case TEGRA_CAMERA_CID_DATA_RATE:
@@ -650,6 +682,26 @@ static int imx482_set_custom_ctrls(struct v4l2_ctrl *ctrl)
 		break;
 	case TEGRA_CAMERA_CID_TEST_PATTERN:
 		err = ops->set_test_pattern(tc_dev, *ctrl->p_new.p_u32);
+		break;
+	case TEGRA_CAMERA_CID_LCG:
+		imx482_write_reg(s_data, FDG_SEL0, *ctrl->p_new.p_u8 ? 1 : 0);
+		break;
+	case TEGRA_CAMERA_CID_SENSOR_TEMPERATURE:
+		// control writing will request the update from sensor
+		*ctrl->p_new.p_s64 = 0;
+		*ctrl->p_cur.p_s64 = 0;
+		if (priv->temp_sens_addr > 0) {
+			// read new temperature
+			s64 temp = 0;
+			err = temperature_sensor_read(&priv->temp_sensor, &temp);
+			if (err) {
+				dev_err(tc_dev->dev, "%s: read temperature sensor failed, ret %d", __func__, err);
+			} else {
+				*ctrl->p_new.p_s64 = (s64) temp;
+				*ctrl->p_cur.p_s64 = (s64) temp;
+				dev_dbg(tc_dev->dev, "%s: temperature now is %lld", __func__, temp);
+			}
+		}
 		break;
 	default:
 		pr_err("%s: unknown ctrl id.\n", __func__);
@@ -1005,6 +1057,9 @@ static struct camera_common_pdata *imx482_parse_dt(struct tegracam_device *tc_de
 	if (err)
 		dev_dbg(dev, "avdd, iovdd and/or dvdd reglrs. not present, "
 			"assume sensor powered independently\n");
+
+	board_priv_pdata->has_eeprom =
+		of_property_read_bool(np, "has-eeprom");
 
 	return board_priv_pdata;
 
@@ -1598,14 +1653,31 @@ static struct camera_common_sensor_ops imx482_common_ops = {
 	.check_unsupported_mode = imx482_check_unsupported_mode,
 };
 
-
 static int imx482_board_setup(struct imx482 *priv)
 {
 	struct camera_common_data *s_data = priv->s_data;
 	struct device *dev = s_data->dev;
 	int err = 0;
+	struct device_node *np = dev->of_node;
 
 	dev_dbg(dev, "%s++\n", __func__);
+
+	err = of_property_read_u32(np, "temperature-addr", &priv->temp_sens_addr);
+	if (err) {
+		dev_err(dev, "temperature-addr is missing");
+	} else {
+		dev_dbg(dev, "temperature-addr 0x%x", priv->temp_sens_addr);
+	}
+
+	if (priv->temp_sens_addr > 0) {
+		err = temperature_sensor_init(priv->i2c_client, &priv->temp_sensor, priv->temp_sens_addr);
+		if (err) {
+			dev_err(dev, "%s: initialize temperature sensor failed, err %d", __func__, err);
+			priv->temp_sens_addr = 0;
+		} else {
+			dev_info(dev, "%s: temperature sensor initialized", __func__);
+		}
+	}
 
 	err = camera_common_mclk_enable(s_data);
 	if (err) {
@@ -1794,6 +1866,8 @@ static int imx482_remove(struct i2c_client *client)
 	struct camera_common_data *s_data = to_camera_common_data(&client->dev);
 	struct imx482 *priv = (struct imx482 *)s_data->priv;
 
+	if (priv->temp_sens_addr > 0)
+		temperature_sensor_release(&priv->temp_sensor);
 	tegracam_v4l2subdev_unregister(priv->tc_dev);
 	tegracam_device_unregister(priv->tc_dev);
 

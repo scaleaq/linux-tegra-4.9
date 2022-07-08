@@ -492,6 +492,8 @@
 					clock-names = "extperiph1", "pllp_grtba";
 					mclk = "extperiph1";
 					clock-frequency = <37125000>;
+
+				temperature-addr = <0x48>;
 			};
 		};
 		i2c@1 {
@@ -505,6 +507,8 @@
 					clock-names = "extperiph1", "pllp_grtba";
 					mclk = "extperiph1";
 					clock-frequency = <37125000>;
+
+				temperature-addr = <0x48>;
 			};
 		};
 		i2c@2 {
@@ -518,6 +522,8 @@
 					clock-names = "extperiph1", "pllp_grtba";
 					mclk = "extperiph1";
 					clock-frequency = <37125000>;
+
+				temperature-addr = <0x48>;
 			};
 		};
 	};

@@ -166,6 +166,7 @@
 				mclk = "clk_out_3";
 				clock-frequency = <37125000>;
 				reset-gpios = <&gpio CAM1_PWDN GPIO_ACTIVE_HIGH>;
+				temperature-addr = <0x48>;
 
 				mode0 {
 					num_lanes = "2";
