@@ -1571,6 +1571,8 @@ static int imx485_set_mode(struct tegracam_device *tc_dev)
 	struct device *dev = tc_dev->dev;
 	int err;
 
+	// Reset data rate
+	priv->data_rate = IMX485_1782_MBPS;
 	err = imx485_write_table(priv, mode_table[IMX485_INIT_SETTINGS]);
 	if (err) {
 		dev_err(dev, "%s: unable to initialize sensor settings\n", __func__);

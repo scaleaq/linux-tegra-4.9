@@ -244,7 +244,7 @@
 					max_hdr_ratio = "64";
 					framerate_factor = "1000000";
 					min_framerate = "1500000"; /* 1.5 */
-					max_framerate = "60000000"; /* 62 */
+					max_framerate = "90000000"; /* 62 */
 					step_framerate = "1";
 					default_framerate= "30000000";
 					exposure_factor = "1000000";
@@ -285,7 +285,7 @@
 					max_hdr_ratio = "64";
 					framerate_factor = "1000000";
 					min_framerate = "1500000"; /* 1.5 */
-					max_framerate = "30000000"; /* 32 */
+					max_framerate = "60000000"; /* 32 */
 					step_framerate = "1";
 					default_framerate= "30000000";
 					exposure_factor = "1000000";
