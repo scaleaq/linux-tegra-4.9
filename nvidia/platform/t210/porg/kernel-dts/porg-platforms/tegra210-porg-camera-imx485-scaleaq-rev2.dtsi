@@ -213,7 +213,7 @@
 				* If sensor does not support embedded metadata value should be 0.
 				*/
 
-				mode1 { //
+				mode0 { //
 					mclk_khz = "37125";
 					num_lanes = "4";
 					tegra_sinterface = "serial_a";
@@ -254,7 +254,7 @@
 					default_exp_time = "10000";/* us */
 					embedded_metadata_height = "1";
 				};
-				mode2 { //
+				mode1 { //
 					mclk_khz = "37125";
 					num_lanes = "4";
 					tegra_sinterface = "serial_a";
