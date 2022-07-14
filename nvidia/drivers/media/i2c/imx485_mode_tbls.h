@@ -466,9 +466,9 @@ static const imx485_reg mode_disable_pattern_generator[] = {
  */
 
 enum {
+    IMX485_MODE_H2V2_BINNING,
     IMX485_MODE_3864x2180,
     IMX485_MODE_CROP_1920x1080,
-    IMX485_MODE_H2V2_BINNING,
 
     IMX485_10BIT_MODE,
     IMX485_12BIT_MODE,
@@ -497,9 +497,9 @@ static const imx485_reg *data_rate_table[] = {
 
 static const imx485_reg *mode_table[] = {
 
+    [IMX485_MODE_H2V2_BINNING]   = mode_h2v2_binning,
     [IMX485_MODE_3864x2180]      = mode_3864x2180,
     [IMX485_MODE_CROP_1920x1080] = mode_crop_1920x1080,
-    [IMX485_MODE_H2V2_BINNING]   = mode_h2v2_binning,
 
     [IMX485_EN_PATTERN_GEN]      = mode_enable_pattern_generator,
     [IMX485_DIS_PATTERN_GEN]     = mode_disable_pattern_generator,
@@ -532,6 +532,13 @@ static const int imx485_142fps[] = {
  */
 static const struct camera_common_frmfmt imx485_frmfmt[] = {
     {
+        .size = {IMX485_MODE_BINNING_H2V2_WIDTH, IMX485_MODE_BINNING_H2V2_HEIGHT},
+        .framerates = imx485_90fps,
+        .num_framerates = 1,
+        .hdr_en = false,
+        .mode = IMX485_MODE_H2V2_BINNING
+    },
+    {
         .size = {IMX485_DEFAULT_WIDTH, IMX485_DEFAULT_HEIGHT},
         .framerates = imx485_72fps,
         .num_framerates = 1,
@@ -544,13 +551,6 @@ static const struct camera_common_frmfmt imx485_frmfmt[] = {
         .num_framerates = 1,
         .hdr_en = false,
         .mode = IMX485_MODE_CROP_1920x1080
-    },
-    {
-        .size = {IMX485_MODE_BINNING_H2V2_WIDTH, IMX485_MODE_BINNING_H2V2_HEIGHT},
-        .framerates = imx485_90fps,
-        .num_framerates = 1,
-        .hdr_en = false,
-        .mode = IMX485_MODE_H2V2_BINNING
     },
 };
 
