@@ -34,6 +34,7 @@
 //#include "common/tegra186-p3636-0001-a00-audio.dtsi"
 #include "common/tegra186-p3636-0001-a00-thermal.dtsi"
 #include "common/tegra186-p3636-plugin-manager.dtsi"
+#include "tegra18x-orbit_tx2nx_rev3-pinmux.dtsi"
 
 #define EXTCON_NONE		0
 #define EXTCON_USB		1
@@ -406,11 +407,11 @@
 	};
 
 	pwm@3290000 {
-		status = "okay";
+		status = "disabled";
 	};
 
 	pwm@32a0000 {
-		status = "okay";
+		status = "disabled";
 	};
 
 	pwm@c340000 {
@@ -546,7 +547,7 @@
 			"",            "",            "",          "",          "",           "",           "",          "",          "",          "",
 			"",            "",            "",          "",          "",           "",           "",          "",          "",          "",
 			"",            "",            "UARTDBG_TX","UARTDBG_RX","",           "",           "",          "",          "",          "",
-			"LED_DIM",     "",            "",          "",          "",           "IRIS_PWM",   "",          "",          "",          "",
+			"LED_DIM",     "",            "",          "",          "",           "",           "",          "",          "",          "",
 			"",            "",            "",          "",          "FAN_PWM",    "",           "",          "",          "",          "",
 			"",            "",            "",          "",          "",           "",           "",          "",          "FAN_TACH",  "",
 			"",            "",            "",          "",          "",           "",           "",          "",          "",          "";
@@ -603,11 +604,19 @@
 	gpio@c2f0000 {
 		gpio-line-names = \
 			"",          "",          "",          "",          "",         "",         "",          "",          "",          "",
-			"",          "",          "",          "",          "",         "",         "",          "",          "",          "",
+			"",          "",          "",          "IRIS_PWM",  "",         "",         "",          "",          "",          "",
 			"",          "",          "",          "",          "",         "",         "",          "",          "",          "",
 			"",          "",          "",          "",          "",         "",         "",          "",          "",          "",
 			"",          "",          "",          "",          "",         "",         "",          "",          "",          "",
 			"BNO_INTR",  "",          "",          "",          "",         "",         "",          "",          "",          "",
 			"",          "",          "",          "",          "",         "",         "",          "",          "",          "";
+
+		iris-pwm { // gpio13
+			gpio-hog;
+			gpios = <TEGRA_AON_GPIO(U, 5) GPIO_ACTIVE_HIGH>;
+			label = "iris-pwm";
+			output-low;
+			status = "okay";
+		};
 	};
 };
