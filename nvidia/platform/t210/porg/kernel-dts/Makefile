@@ -46,7 +46,6 @@ dtb-$(CONFIG_ARCH_TEGRA_210_SOC) += tegra210-orbit-nano-rev3-imx585.dtb
 dtb-$(CONFIG_ARCH_TEGRA_210_SOC) += tegra210-orbit-nano-sd-rev3-imx482.dtb
 dtb-$(CONFIG_ARCH_TEGRA_210_SOC) += tegra210-orbit-nano-sd-rev3-imx485.dtb
 dtb-$(CONFIG_ARCH_TEGRA_210_SOC) += tegra210-orbit-nano-sd-rev3-imx585.dtb
-dtb-$(CONFIG_ARCH_TEGRA_210_SOC) += tegra210-orbit-nano-rev1-imx585.dtb
 dtb-$(CONFIG_ARCH_TEGRA_210_SOC) += tegra210-orbit-nano-rev4-imx482.dtb
 dtb-$(CONFIG_ARCH_TEGRA_210_SOC) += tegra210-orbit-nano-rev4-imx485.dtb
 dtb-$(CONFIG_ARCH_TEGRA_210_SOC) += tegra210-orbit-nano-rev4-imx585.dtb

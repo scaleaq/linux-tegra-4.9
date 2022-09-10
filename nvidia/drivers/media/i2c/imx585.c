@@ -30,7 +30,7 @@
 #include <media/tegracam_core.h>
 #include <media/imx585.h>
 
-#if 1
+#if 0
 #define print_dbg(fmt,args...) pr_info("imx585 %s(): DBG " fmt "\n", __func__, ##args)
 #else
 #define print_dbg(fmt,args...) pr_debug("imx585 %s(): DBG " fmt "\n", __func__, ##args)
@@ -1417,7 +1417,7 @@ static int imx585_set_mode(struct tegracam_device *tc_dev)
 	}
 	if (!hdr_en) {
 		ctrl = imx585_find_v4l2_ctrl(tc_dev, TEGRA_CAMERA_CID_CLEAR_HDR_EN);
-		if (ctrl)
+		if (ctrl && *ctrl->p_new.p_u8)
 		{
 			err = imx585_apply_controls(tc_dev);
 			print_dbg("Applied controls for Clear HDR");
