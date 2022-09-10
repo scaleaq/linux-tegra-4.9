@@ -48,7 +48,6 @@
 #define TPG_PATSEL_DUOUT 0x30e2
 #define XVS_XHS_DRV      0x30a6
 
-
 #define IMX585_K_FACTOR 1000LL
 #define IMX585_M_FACTOR 1000000LL
 #define IMX585_G_FACTOR 1000000000LL
@@ -57,11 +56,8 @@
 #define IMX585_MAX_BLACK_LEVEL_12BIT 0xFFC
 #define IMX585_MAX_BLACK_LEVEL_10BIT 0x3FF
 
-#define IMX585_MIN_SHR0_LENGTH 10
+#define IMX585_MIN_SHR0_LENGTH 0x10
 #define IMX585_MIN_INTEGRATION_LINES 2
-
-#define IMX585_4_CSI_LANES 4
-#define IMX585_TWO_LANE_MODE 2
 
 #define IMX585_INCK 74250000LL
 
@@ -181,7 +177,7 @@ static struct v4l2_ctrl_config imx585_custom_ctrl_list[] = {
 		.name = "CHDR EXP_TH_H",
 		.type = V4L2_CTRL_TYPE_INTEGER64,
 		.flags = V4L2_CTRL_FLAG_SLIDER,
-		.def = 0x02a0,
+		.def = 0x0bff,
 		.min = 0,
 		.max = 0x0fff,
 		.step = 1,
@@ -192,7 +188,7 @@ static struct v4l2_ctrl_config imx585_custom_ctrl_list[] = {
 		.name = "CHDR EXP_TH_L",
 		.type = V4L2_CTRL_TYPE_INTEGER64,
 		.flags = V4L2_CTRL_FLAG_SLIDER,
-		.def = 0x0180,
+		.def = 0x03ff,
 		.min = 0,
 		.max = 0x0fff,
 		.step = 1,
@@ -213,7 +209,7 @@ static struct v4l2_ctrl_config imx585_custom_ctrl_list[] = {
 		.name = "CHDR CCMP1 EXP",
 		.type = V4L2_CTRL_TYPE_INTEGER64,
 		.flags = V4L2_CTRL_FLAG_SLIDER,
-		.def = 0x180,
+		.def = 0x0400,
 		.min = 0,
 		.max = 0x01FFFF,
 		.step = 1,
@@ -224,7 +220,7 @@ static struct v4l2_ctrl_config imx585_custom_ctrl_list[] = {
 		.name = "CHDR CCMP2 EXP",
 		.type = V4L2_CTRL_TYPE_INTEGER64,
 		.flags = V4L2_CTRL_FLAG_SLIDER,
-		.def = 0x4000,
+		.def = 0x4fff,
 		.min = 0,
 		.max = 0x01FFFF,
 		.step = 1,
@@ -236,7 +232,7 @@ static struct v4l2_ctrl_config imx585_custom_ctrl_list[] = {
 		.type = V4L2_CTRL_TYPE_MENU,
 		.min = 0,
 		.max = ARRAY_SIZE(chdr_exp_acmp_menu) - 1,
-		.def = 5,
+		.def = 3,
 		.qmenu = chdr_exp_acmp_menu,
 	},
 	{
@@ -246,7 +242,7 @@ static struct v4l2_ctrl_config imx585_custom_ctrl_list[] = {
 		.type = V4L2_CTRL_TYPE_MENU,
 		.min = 0,
 		.max = ARRAY_SIZE(chdr_exp_acmp_menu) - 1,
-		.def = 6,
+		.def = 4,
 		.qmenu = chdr_exp_acmp_menu,
 	},
 	{
@@ -258,6 +254,16 @@ static struct v4l2_ctrl_config imx585_custom_ctrl_list[] = {
 		.max = ARRAY_SIZE(chdr_exp_gain_menu) - 1,
 		.def = 1,
 		.qmenu = chdr_exp_gain_menu,
+	},
+	{
+		.ops = &imx585_custom_ctrl_ops,
+		.id = TEGRA_CAMERA_CID_COMBI_EN,
+		.name = "Clear HDR combination",
+		.type = V4L2_CTRL_TYPE_BOOLEAN,
+		.def = 0,
+		.min = 0,
+		.max = 1,
+		.step = 1,
 	},
 };
 
@@ -278,6 +284,7 @@ struct imx585 {
 	u32 line_time;
 	struct camera_common_data *s_data;
 	struct tegracam_device *tc_dev;
+	u8 clear_hdr_en;
 
 	// Temperature sensor
 	u32 temp_sens_addr;
@@ -293,11 +300,14 @@ static const struct regmap_config sensor_regmap_config = {
 
 static void imx585_update_ctrl_range(struct tegracam_device *tc_dev,
 				     int ctrl_id, u64 min, u64 max);
+static int imx585_calculate_line_time(struct tegracam_device *tc_dev);
+static int imx585_update_framerate_range(struct tegracam_device *tc_dev);
 
 static bool imx585_is_binning_mode(struct camera_common_data *s_data)
 {
 	switch (s_data->mode_prop_idx) {
-	case IMX585_MODE_1928x1090_30FPS:
+	case IMX585_MODE_1928x1090_60FPS:
+	case IMX585_MODE_1928x1090_HDR12B_30FPS:
 		return true;
 	default:
 		return false;
@@ -537,18 +547,6 @@ static void imx585_update_ctrl_range(struct tegracam_device *tc_dev,
 			 __func__, s_data->mode_prop_idx, s_data->exposure_min_range,
 			s_data->exposure_max_range);
 		break;
-	case TEGRA_CAMERA_CID_EXPOSURE_SHORT:
-		s_data->short_exposure_min_range = min;
-		s_data->short_exposure_max_range = max;
-
-		/* Current value must be recalculated */
-		dev_dbg(dev, "%s: recalculate short exposure for set frame length.\n", __func__);
-		err = ops->set_exposure_short(tc_dev, *ctrl->p_cur.p_s64);
-
-		dev_dbg(dev, "%s:  mode: %u, short exposure range [%llu, %llu]\n",
-			__func__, s_data->mode_prop_idx, s_data->short_exposure_min_range,
-			s_data->short_exposure_max_range);
-		break;
 	case TEGRA_CAMERA_CID_FRAME_RATE:
 		ctrlprops->min_framerate = min;
 		ctrlprops->max_framerate = max;
@@ -583,6 +581,13 @@ static int imx585_set_frame_rate(struct tegracam_device *tc_dev, s64 val)
 
 	frame_length = (((u64)mode->control_properties.framerate_factor *
 			IMX585_G_FACTOR) / (val * priv->line_time));
+
+#if 0
+	if (priv->clear_hdr_en || (s_data->mode_prop_idx >= IMX585_MODE_3856x2180_HDR12B_30FPS)) {
+		// Clear HDR, frame length is double
+		frame_length *= 2;
+	}
+#endif
 
 	// Value must be multiple of 2
 	frame_length = (frame_length % 2) ? frame_length + 1 : frame_length;
@@ -716,7 +721,7 @@ static int imx585_set_custom_ctrls(struct v4l2_ctrl *ctrl)
 	const struct tegracam_ctrl_ops *ops = handler->ctrl_ops;
 	struct tegracam_device *tc_dev = handler->tc_dev;
 	struct camera_common_data *s_data = tc_dev->s_data;
-	// struct imx585 *priv = (struct imx585 *)tegracam_get_privdata(tc_dev);
+	struct imx585 *priv = (struct imx585 *)tegracam_get_privdata(tc_dev);
 	int err = 0;
 
 	switch (ctrl->id) {
@@ -736,14 +741,63 @@ static int imx585_set_custom_ctrls(struct v4l2_ctrl *ctrl)
 		}
 		break;
 	case TEGRA_CAMERA_CID_SENSOR_TEMPERATURE:
-		print_dbg("set image sensor temperature: %u", *ctrl->p_new.p_u32);
+		// control writing will request the update from sensor
+		*ctrl->p_new.p_s64 = 0;
+		*ctrl->p_cur.p_s64 = 0;
+		if (priv->temp_sens_addr > 0) {
+			// read new temperature
+			s64 temp = 0;
+			err = temperature_sensor_read(&priv->temp_sensor, &temp);
+			if (err) {
+				dev_err(tc_dev->dev, "%s: read temperature sensor failed, ret %d", __func__, err);
+			} else {
+				*ctrl->p_new.p_s64 = (s64) temp;
+				*ctrl->p_cur.p_s64 = (s64) temp;
+				dev_dbg(tc_dev->dev, "%s: temperature now is %lld", __func__, temp);
+			}
+		}
 		break;
 	case TEGRA_CAMERA_CID_CLEAR_HDR_EN:
 		print_dbg("set CLEAR HDR: %u", *ctrl->p_new.p_u8);
-		if (*ctrl->p_new.p_u8) {
-			// err = imx585_write_table(priv, mode_table[IMX585_MODE_CLEAR_HDR]);
+		if (s_data->mode > IMX585_MODE_1928x1090_60FPS) {
+			return -EINVAL;
+		}
+		priv->clear_hdr_en = *ctrl->p_new.p_u8;
+		if (s_data->mode == IMX585_MODE_3856x2180_60FPS) {
+			if (*ctrl->p_new.p_u8) {
+				err = imx585_write_table(priv, mode_table[IMX585_MODE_3856x2180_60FPS_CHDR]);
+			} else {
+				err = imx585_write_table(priv, mode_table[IMX585_MODE_3856x2180_60FPS_NORM]);
+			}
 		} else {
-			// err = imx585_write_table(priv, mode_table[IMX585_MODE_NON_HDR]);
+			if (*ctrl->p_new.p_u8) {
+				err = imx585_write_table(priv, mode_table[IMX585_MODE_1928x1090_60FPS_CHDR]);
+			} else {
+				err = imx585_write_table(priv, mode_table[IMX585_MODE_1928x1090_60FPS_NORM]);
+			}
+		}
+		err |= imx585_calculate_line_time(tc_dev);
+		imx585_update_framerate_range(tc_dev);
+
+		return err;
+		break;
+	case TEGRA_CAMERA_CID_COMBI_EN:
+		print_dbg("set Combination en: %u", *ctrl->p_new.p_u8);
+		if (s_data->mode > IMX585_MODE_1928x1090_60FPS) {
+			return -EINVAL;
+		}
+		if (*ctrl->p_new.p_u8) {
+			err = imx585_write_reg(s_data, 0x3024, 0x02); // COMBI_EN
+			err |= imx585_write_reg(s_data, 0x36ef, 0x01); // Compression
+		} else {
+			err = imx585_write_reg(s_data, 0x3024, 0x00);
+			err |= imx585_write_reg(s_data, 0x36ef, 0x00);
+		}
+		err |= imx585_calculate_line_time(tc_dev);
+		imx585_update_framerate_range(tc_dev);
+		if (err != 0) {
+			dev_err(tc_dev->dev, "%s: write COMBI_EN failed, err %d", __func__, err);
+			return err;
 		}
 		return err;
 		break;
@@ -1161,6 +1215,8 @@ static int imx585_update_framerate_range(struct tegracam_device *tc_dev)
 	struct camera_common_data *s_data = tc_dev->s_data;
 	struct imx585 *priv = (struct imx585 *)tegracam_get_privdata(tc_dev);
 	struct sensor_control_properties *ctrlprops = NULL;
+	struct v4l2_ctrl *ctrl = NULL;
+	int compress_en = 0;
 	u64 max_framerate;
 
 	ctrlprops =
@@ -1172,7 +1228,17 @@ static int imx585_update_framerate_range(struct tegracam_device *tc_dev)
 		priv->min_frame_length = s_data->fmt_height + IMX585_MIN_FRAME_LENGTH_DELTA;
 
 	max_framerate = (IMX585_G_FACTOR * IMX585_M_FACTOR) / (priv->min_frame_length * priv->line_time);
-	if (s_data->mode == IMX585_MODE_3856x2180_25FPS_CHDR) {
+
+	ctrl = imx585_find_v4l2_ctrl(tc_dev, TEGRA_CAMERA_CID_COMBI_EN);
+	if (ctrl == NULL) {
+		dev_err(tc_dev->dev, "%s(): could not find device ctrl\n", __func__);
+	} else {
+		compress_en = *ctrl->p_new.p_u8;
+	}
+
+	if ((s_data->mode > IMX585_MODE_1928x1090_60FPS) ||
+		(priv->clear_hdr_en && compress_en)) {
+		print_dbg("max frame rate / 2");
 		max_framerate /= 2;
 	}
 	print_dbg("frame rate range [%u-%llu]", ctrlprops->min_framerate, max_framerate);
@@ -1186,8 +1252,33 @@ static int imx585_apply_controls(struct tegracam_device *tc_dev)
 	struct camera_common_data *s_data = tc_dev->s_data;
 	struct v4l2_ctrl *ctrl;
 	int err = 0;
-	// struct imx585 *priv = (struct imx585 *)tegracam_get_privdata(tc_dev);
+	struct imx585 *priv = (struct imx585 *)tegracam_get_privdata(tc_dev);
 
+	ctrl = imx585_find_v4l2_ctrl(tc_dev, TEGRA_CAMERA_CID_CLEAR_HDR_EN);
+	if (ctrl) {
+		print_dbg("set Clear HDR: %u", *ctrl->p_new.p_u8);
+		if (s_data->mode > IMX585_MODE_1928x1090_60FPS) {
+			return -EINVAL;
+		}
+		priv->clear_hdr_en = *ctrl->p_new.p_u8;
+		if (s_data->mode == IMX585_MODE_3856x2180_60FPS) {
+			if (*ctrl->p_new.p_u8) {
+				err = imx585_write_table(priv, mode_table[IMX585_MODE_3856x2180_60FPS_CHDR]);
+			} else {
+				err = imx585_write_table(priv, mode_table[IMX585_MODE_3856x2180_60FPS_NORM]);
+			}
+		} else {
+			if (*ctrl->p_new.p_u8) {
+				err = imx585_write_table(priv, mode_table[IMX585_MODE_1928x1090_60FPS_CHDR]);
+			} else {
+				err = imx585_write_table(priv, mode_table[IMX585_MODE_1928x1090_60FPS_NORM]);
+			}
+		}
+		if (err != 0) {
+			dev_err(tc_dev->dev, "%s: Apply clear HDR failed, err %d", __func__, err);
+			return err;
+		}
+	}
 	ctrl = imx585_find_v4l2_ctrl(tc_dev, TEGRA_CAMERA_CID_EXP_TH_H);
 	if (ctrl) {
 		print_dbg("set EXP_TH_H: %u", *ctrl->p_new.p_u32);
@@ -1267,6 +1358,21 @@ static int imx585_apply_controls(struct tegracam_device *tc_dev)
 			return err;
 		}
 	}
+	ctrl = imx585_find_v4l2_ctrl(tc_dev, TEGRA_CAMERA_CID_COMBI_EN);
+	if (ctrl) {
+		print_dbg("set COMBI_EN: %u", *ctrl->p_new.p_u8);
+		if (*ctrl->p_new.p_u8) {
+			err = imx585_write_reg(s_data, 0x3024, 0x02); // COMBI_EN
+			err |= imx585_write_reg(s_data, 0x36ef, 0x01); // Compression
+		} else {
+			err = imx585_write_reg(s_data, 0x3024, 0x00); // COMBI_EN
+			err |= imx585_write_reg(s_data, 0x36ef, 0x00); // Compression
+		}
+		if (err != 0) {
+			dev_err(tc_dev->dev, "%s: write COMBI_EN and compression failed, err %d", __func__, err);
+			return err;
+		}
+	}
 
 	return 0;
 }
@@ -1274,31 +1380,49 @@ static int imx585_apply_controls(struct tegracam_device *tc_dev)
 static int imx585_set_mode(struct tegracam_device *tc_dev)
 {
 	struct imx585 *priv = (struct imx585 *)tegracam_get_privdata(tc_dev);
+	struct device *dev = tc_dev->dev;
 	struct camera_common_data *s_data = tc_dev->s_data;
 	int err = 0;
 	struct v4l2_ctrl *ctrl;
+	struct v4l2_control control;
+	int hdr_en = 0;
 
-	print_dbg("mode: %d-%d", s_data->mode, s_data->mode_prop_idx);
-	print_dbg("frmfmt no_fps %d, hdr %d, mode %d", s_data->frmfmt->num_framerates, s_data->frmfmt->hdr_en, s_data->frmfmt->mode);
+	control.id = TEGRA_CAMERA_CID_HDR_EN;
+	err = camera_common_g_ctrl(priv->s_data, &control);
+	if (err < 0) {
+		dev_err(dev, "%s(): could not find device ctrl.\n", __func__);
+		return err;
+	}
+
+	if (switch_ctrl_qmenu[control.value] == SWITCH_ON)  {
+		hdr_en = 1;
+		priv->clear_hdr_en = 1;
+	}
+	if (s_data->mode_prop_idx < IMX585_MODE_3856x2180_HDR12B_30FPS) {
+		priv->clear_hdr_en = 0;
+	}
+
+	print_dbg("mode: %d-%d, hdr %d, clear hdr %d", s_data->mode, s_data->mode_prop_idx, hdr_en, priv->clear_hdr_en);
+	print_dbg("frmfmt %x, hdr %d, mode %d", s_data->colorfmt->code, s_data->frmfmt->hdr_en, s_data->frmfmt->mode);
 
 	err = imx585_write_table(priv, mode_table[IMX585_MODE_COMMON]);
-	if (err)
+	if (err) {
+		dev_err(dev, "Failed to write common table\r\n");
 		return err;
-
-	if ((s_data->colorfmt->code == MEDIA_BUS_FMT_SRGGB10_1X10) && (s_data->mode_prop_idx != IMX585_MODE_3856x2180_25FPS_CHDR)) {
-		print_dbg("Mode 10bits.");
-		s_data->mode_prop_idx = IMX585_MODE_3856x2180_30FPS_10B;
-		s_data->mode = IMX585_MODE_3856x2180_30FPS_10B;
 	}
 
 	err = imx585_write_table(priv, mode_table[s_data->mode_prop_idx]);
-	if (err)
+	if (err) {
 		return err;
-	if (s_data->mode_prop_idx == IMX585_MODE_3856x2180_25FPS_CHDR) {
-		err = imx585_apply_controls(tc_dev);
-		print_dbg("Applied controls for Clear HDR");
 	}
-
+	if (!hdr_en) {
+		ctrl = imx585_find_v4l2_ctrl(tc_dev, TEGRA_CAMERA_CID_CLEAR_HDR_EN);
+		if (ctrl)
+		{
+			err = imx585_apply_controls(tc_dev);
+			print_dbg("Applied controls for Clear HDR");
+		}
+	}
 
 	ctrl = imx585_find_v4l2_ctrl(tc_dev, TEGRA_CAMERA_CID_LCG);
 	if (ctrl) {
@@ -1372,6 +1496,16 @@ static int imx585_board_setup(struct imx585 *priv)
 		dev_err(dev, "temperature-addr is missing\n");
 	} else {
 		print_dbg("temperature-addr 0x%x", priv->temp_sens_addr);
+	}
+
+	if (priv->temp_sens_addr > 0) {
+		err = temperature_sensor_init(priv->i2c_client, &priv->temp_sensor, priv->temp_sens_addr);
+		if (err) {
+			dev_err(dev, "%s: initialize temperature sensor failed, err %d", __func__, err);
+			priv->temp_sens_addr = 0;
+		} else {
+			dev_info(dev, "%s: temperature sensor initialized", __func__);
+		}
 	}
 
 	err = camera_common_mclk_enable(s_data);
@@ -1548,6 +1682,8 @@ static int imx585_remove(struct i2c_client *client)
 	struct camera_common_data *s_data = to_camera_common_data(&client->dev);
 	struct imx585 *priv = (struct imx585 *)s_data->priv;
 
+	if (priv->temp_sens_addr > 0)
+		temperature_sensor_release(&priv->temp_sensor);
 	tegracam_v4l2subdev_unregister(priv->tc_dev);
 	tegracam_device_unregister(priv->tc_dev);
 

@@ -32,6 +32,7 @@
 #define TEGRA_CAMERA_CID_ACMP2_EXP                    (TEGRA_CAMERA_CID_BASE+168)
 #define TEGRA_CAMERA_CID_ACMP1_EXP                    (TEGRA_CAMERA_CID_BASE+169)
 #define TEGRA_CAMERA_CID_EXP_GAIN                     (TEGRA_CAMERA_CID_BASE+170)
+#define TEGRA_CAMERA_CID_COMBI_EN                     (TEGRA_CAMERA_CID_BASE+171)
 
 int temperature_sensor_init(struct i2c_client *cami2c, struct camera_common_eeprom_data *eeprom, u32 addr);
 int temperature_sensor_release(struct camera_common_eeprom_data *eeprom);
