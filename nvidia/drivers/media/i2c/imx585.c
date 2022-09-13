@@ -1533,7 +1533,7 @@ static int imx585_board_setup(struct imx585 *priv)
 		dev_err(dev, "%s: error during i2c read probe (%d)\n", __func__, err);
 		goto err_reg_probe;
 	}
-	dev_info(dev, "Identification registers: 0x%02x 0x%02x\n", reg_val[0], reg_val[1]);
+	print_dbg("Identification registers: 0x%02x 0x%02x", reg_val[0], reg_val[1]);
 
 	if (!((reg_val[0] != 0x49) || ((reg_val[1] & 0x03) != 0x02)))
 		dev_err(dev, "%s: sensor model id: %x%x is NOT IMX585\n",
