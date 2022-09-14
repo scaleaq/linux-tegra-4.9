@@ -303,11 +303,11 @@
 					discontinuous_clk = "no";
 					dpcm_enable = "false";
 					cil_settletime = "0";
-					active_w = "3864";
-					active_h = "2180";
+					active_w = "1920";
+					active_h = "1080";
 
-					dynamic_pixel_bit_depth = "10";
-					csi_pixel_bit_depth = "10";
+					dynamic_pixel_bit_depth = "12";
+					csi_pixel_bit_depth = "12";
 					mode_type = "bayer";
 					pixel_phase = "rggb";
 
@@ -326,9 +326,9 @@
 					max_hdr_ratio = "64";
 					framerate_factor = "1000000";
 					min_framerate = "1500000"; /* 1.5 */
-					max_framerate = "38000000"; /* 38 */
+					max_framerate = "60000000"; /* 38 */
 					step_framerate = "1";
-					default_framerate= "38000000";
+					default_framerate= "30000000";
 					exposure_factor = "1000000";
 					min_exp_time = "27";  /* us */
 					max_exp_time = "660000"; /* us */
