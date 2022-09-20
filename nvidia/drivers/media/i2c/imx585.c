@@ -128,6 +128,11 @@ static const char * const chdr_exp_acmp_menu[] = {
 	[11] = "1/2048",
 };
 
+static const char * const imx585_conversion_gain_menu[] = {
+	[0] = "Low Conversion Gain",
+	[1] = "High Conversion Gain",
+};
+
 static struct v4l2_ctrl_config imx585_custom_ctrl_list[] = {
 	{
 		.ops = &imx585_custom_ctrl_ops,
@@ -142,13 +147,12 @@ static struct v4l2_ctrl_config imx585_custom_ctrl_list[] = {
 	{
 		.ops = &imx585_custom_ctrl_ops,
 		.id = TEGRA_CAMERA_CID_LCG,
-		.name = "LCG Enable",
-		.type = V4L2_CTRL_TYPE_BOOLEAN,
-		.flags = V4L2_CTRL_FLAG_UPDATE,
-		.def = 1,
+		.name = "Conversion Gain",
+		.type = V4L2_CTRL_TYPE_MENU,
 		.min = 0,
-		.max = 1,
-		.step = 1,
+		.max = ARRAY_SIZE(imx585_conversion_gain_menu) - 1,
+		.def = 0,
+		.qmenu = imx585_conversion_gain_menu,
 	},
 	{
 		.ops = &imx585_custom_ctrl_ops,
@@ -730,11 +734,7 @@ static int imx585_set_custom_ctrls(struct v4l2_ctrl *ctrl)
 		break;
 	case TEGRA_CAMERA_CID_LCG:
 		print_dbg("set LCG: %u", *ctrl->p_new.p_u8);
-		if (*ctrl->p_new.p_u8) {
-			err = imx585_write_reg(s_data, 0x3030, 0);
-		} else {
-			err = imx585_write_reg(s_data, 0x3030, 1);
-		}
+		err = imx585_write_reg(s_data, 0x3030, *ctrl->p_new.p_u8 ? 1 : 0);
 		if (err) {
 			dev_err(tc_dev->dev, "%s: error writing FDG_SEL0\n", __func__);
 			return err;
@@ -1255,7 +1255,7 @@ static int imx585_apply_controls(struct tegracam_device *tc_dev)
 	struct imx585 *priv = (struct imx585 *)tegracam_get_privdata(tc_dev);
 
 	ctrl = imx585_find_v4l2_ctrl(tc_dev, TEGRA_CAMERA_CID_CLEAR_HDR_EN);
-	if (ctrl) {
+	if ((s_data->mode <= IMX585_MODE_1928x1090_60FPS) && ctrl) {
 		print_dbg("set Clear HDR: %u", *ctrl->p_new.p_u8);
 		if (s_data->mode > IMX585_MODE_1928x1090_60FPS) {
 			return -EINVAL;
@@ -1277,6 +1277,22 @@ static int imx585_apply_controls(struct tegracam_device *tc_dev)
 		if (err != 0) {
 			dev_err(tc_dev->dev, "%s: Apply clear HDR failed, err %d", __func__, err);
 			return err;
+		}
+
+		ctrl = imx585_find_v4l2_ctrl(tc_dev, TEGRA_CAMERA_CID_COMBI_EN);
+		if (ctrl) {
+			print_dbg("set COMBI_EN: %u", *ctrl->p_new.p_u8);
+			if (*ctrl->p_new.p_u8) {
+				err = imx585_write_reg(s_data, 0x3024, 0x02); // COMBI_EN
+				err |= imx585_write_reg(s_data, 0x36ef, 0x01); // Compression
+			} else {
+				err = imx585_write_reg(s_data, 0x3024, 0x00); // COMBI_EN
+				err |= imx585_write_reg(s_data, 0x36ef, 0x00); // Compression
+			}
+			if (err != 0) {
+				dev_err(tc_dev->dev, "%s: write COMBI_EN and compression failed, err %d", __func__, err);
+				return err;
+			}
 		}
 	}
 	ctrl = imx585_find_v4l2_ctrl(tc_dev, TEGRA_CAMERA_CID_EXP_TH_H);
@@ -1358,21 +1374,6 @@ static int imx585_apply_controls(struct tegracam_device *tc_dev)
 			return err;
 		}
 	}
-	ctrl = imx585_find_v4l2_ctrl(tc_dev, TEGRA_CAMERA_CID_COMBI_EN);
-	if (ctrl) {
-		print_dbg("set COMBI_EN: %u", *ctrl->p_new.p_u8);
-		if (*ctrl->p_new.p_u8) {
-			err = imx585_write_reg(s_data, 0x3024, 0x02); // COMBI_EN
-			err |= imx585_write_reg(s_data, 0x36ef, 0x01); // Compression
-		} else {
-			err = imx585_write_reg(s_data, 0x3024, 0x00); // COMBI_EN
-			err |= imx585_write_reg(s_data, 0x36ef, 0x00); // Compression
-		}
-		if (err != 0) {
-			dev_err(tc_dev->dev, "%s: write COMBI_EN and compression failed, err %d", __func__, err);
-			return err;
-		}
-	}
 
 	return 0;
 }
@@ -1415,23 +1416,16 @@ static int imx585_set_mode(struct tegracam_device *tc_dev)
 	if (err) {
 		return err;
 	}
-	if (!hdr_en) {
-		ctrl = imx585_find_v4l2_ctrl(tc_dev, TEGRA_CAMERA_CID_CLEAR_HDR_EN);
-		if (ctrl && *ctrl->p_new.p_u8)
-		{
-			err = imx585_apply_controls(tc_dev);
-			print_dbg("Applied controls for Clear HDR");
-		}
+	ctrl = imx585_find_v4l2_ctrl(tc_dev, TEGRA_CAMERA_CID_CLEAR_HDR_EN);
+	if (hdr_en || (ctrl && *ctrl->p_new.p_u8)) {
+		err = imx585_apply_controls(tc_dev);
+		print_dbg("Applied controls for Clear HDR");
 	}
 
 	ctrl = imx585_find_v4l2_ctrl(tc_dev, TEGRA_CAMERA_CID_LCG);
 	if (ctrl) {
 		print_dbg("set LCG: %u", *ctrl->p_new.p_u8);
-		if (*ctrl->p_new.p_u8) {
-			err = imx585_write_reg(s_data, 0x3030, 0);
-		} else {
-			err = imx585_write_reg(s_data, 0x3030, 1);
-		}
+		err = imx585_write_reg(s_data, 0x3030, *ctrl->p_new.p_u8 ? 1 : 0);
 		if (err) {
 			dev_err(tc_dev->dev, "%s: error writing FDG_SEL0\n", __func__);
 			return err;
