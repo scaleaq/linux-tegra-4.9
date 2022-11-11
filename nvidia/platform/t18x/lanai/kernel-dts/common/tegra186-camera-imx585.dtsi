@@ -455,6 +455,7 @@
 		vi_bw_margin_pct = <25>;
 		isp_peak_byte_per_pixel = <5>;
 		isp_bw_margin_pct = <25>;
+		max_pixel_rate = <240000>;
 
 		/**
 		 * The general guideline for naming badge_info contains 3 parts, and is as follows,
