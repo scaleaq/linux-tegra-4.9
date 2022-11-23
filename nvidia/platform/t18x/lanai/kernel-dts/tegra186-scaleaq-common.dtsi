@@ -373,6 +373,11 @@
 		};
 
 		/delete-node/ battery-charger@6b;
+		eeprom@50 {
+			reg = <0x50>;
+			compatible = "24c04";
+			status = "okay";
+		};
 	};
 
 	external-connection {
