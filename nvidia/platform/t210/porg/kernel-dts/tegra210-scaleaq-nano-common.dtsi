@@ -42,6 +42,16 @@
 		status = "disabled";
 	};
 
+	i2c@7000c500 {
+		status = "okay";
+		eeprom@50 {
+			reg = <0x50>;
+			compatible = "24c04";
+			status = "okay";
+		};
+
+	};
+
 	gpio@6000d000 {
 		/* gpio-name for 40-pin header, gpio-name given as COL(10) x ROW(20) */
 		gpio-line-names = "",          "",          "",          "",          "",         "",         "",          "",          "",          "",
