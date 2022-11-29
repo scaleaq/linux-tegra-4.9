@@ -152,7 +152,7 @@
 			ngpios = <16>;
 			gpio-line-names = \
 				"shdn-2", "de-2", "re-2", "485232-2", "te-2", \
-				"", "", "en-24v", \
+				"", "en-24v", "", \
 				"leden-1", "leden-2", "leden-3", \
 				"en-10v", "", \
 				"poe-tpl", "poe-tph", "poe-bt";
@@ -188,7 +188,7 @@
 			};
 			en-24v {
 				gpio-hog;
-				gpios = <7 GPIO_ACTIVE_HIGH>;
+				gpios = <6 GPIO_ACTIVE_HIGH>;
 				output-low;
 				line-name = "en-24v";
 			};
