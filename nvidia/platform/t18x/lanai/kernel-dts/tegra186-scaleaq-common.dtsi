@@ -624,4 +624,13 @@
 			status = "okay";
 		};
 	};
+
+	/* Power current limit */
+	i2c@3180000 {
+		ina3221x@40 {
+			channel@0 {
+				ti,current-critical-limit-ma = <4500>;
+			};
+		};
+	};
 };
