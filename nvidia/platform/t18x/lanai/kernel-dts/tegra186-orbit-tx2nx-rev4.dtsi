@@ -1,0 +1,23 @@
+#include "tegra186-scaleaq-common.dtsi"
+
+/ {
+	scaleaq,carrier_revision = "4";
+
+	i2c@c240000 {
+		ads1115 {
+			channel_c: channel_c {
+				/* hardware revision ADC */
+				reg = <6>;
+				ti,gain = <1>;
+				ti,datarate = <1>;
+			};
+
+			channel_d: channel_d {
+				/* PoE voltage ADC */
+				reg = <7>;
+				ti,gain = <2>;
+				ti,datarate = <1>;
+			};
+		};
+	};
+};

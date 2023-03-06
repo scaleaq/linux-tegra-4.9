@@ -1,0 +1,5 @@
+#include "tegra186-scaleaq-common.dtsi"
+
+/ {
+	scaleaq,carrier_revision = "2";
+};

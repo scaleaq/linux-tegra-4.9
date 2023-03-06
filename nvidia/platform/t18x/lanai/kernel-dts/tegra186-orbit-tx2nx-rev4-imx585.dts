@@ -12,7 +12,7 @@
  * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for
  * more details.
  */
-#include "tegra186-scaleaq-common.dtsi"
+#include "tegra186-orbit-tx2nx-rev4.dtsi"
 #include "common/tegra186-p3509-0000-cvb.dtsi"
 #include "common/tegra186-p3509-0000-a00-fixed-regulator.dtsi"
 #include "common/tegra186-p3636-0001-a00-prod.dtsi"
@@ -23,7 +23,6 @@
 
 / {
 	compatible = "nvidia,p3509-0000+p3636-0001", "nvidia,tegra186";
-	scaleaq,carrier_revision = "4";
 
 	nvidia,dtsfilename = __FILE__;
 	nvidia,boardids = "3636:0001:A0";
@@ -187,17 +186,6 @@
 
 	i2c@c250000 {
 		status = "okay";
-	};
-
-	i2c@c240000 {
-		ads1115 {
-			channel_c: channel_c {
-				/* hardware revision ADC */
-				reg = <6>;
-				ti,gain = <1>;
-				ti,datarate = <1>;
-			};
-		};
 	};
 };
 #if LINUX_VERSION >= 414
