@@ -224,7 +224,7 @@ static struct v4l2_ctrl_config imx585_custom_ctrl_list[] = {
 		.name = "CHDR CCMP2 EXP",
 		.type = V4L2_CTRL_TYPE_INTEGER64,
 		.flags = V4L2_CTRL_FLAG_SLIDER,
-		.def = 0x4fff,
+		.def = 0x88ff,
 		.min = 0,
 		.max = 0x01FFFF,
 		.step = 1,
@@ -236,7 +236,7 @@ static struct v4l2_ctrl_config imx585_custom_ctrl_list[] = {
 		.type = V4L2_CTRL_TYPE_MENU,
 		.min = 0,
 		.max = ARRAY_SIZE(chdr_exp_acmp_menu) - 1,
-		.def = 3,
+		.def = 4,
 		.qmenu = chdr_exp_acmp_menu,
 	},
 	{
@@ -246,7 +246,7 @@ static struct v4l2_ctrl_config imx585_custom_ctrl_list[] = {
 		.type = V4L2_CTRL_TYPE_MENU,
 		.min = 0,
 		.max = ARRAY_SIZE(chdr_exp_acmp_menu) - 1,
-		.def = 4,
+		.def = 5,
 		.qmenu = chdr_exp_acmp_menu,
 	},
 	{

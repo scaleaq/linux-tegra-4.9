@@ -337,11 +337,11 @@
 					num_control_point = "4";
 					control_point_x_0 = "0";
 					control_point_x_1 = "1024";
-					control_point_x_2 = "20479";
+					control_point_x_2 = "35071";
 					control_point_x_3 = "65535";
 					control_point_y_0 = "0";
 					control_point_y_1 = "1024";
-					control_point_y_2 = "2560";
+					control_point_y_2 = "3152";
 					control_point_y_3 = "4096";
 				};
 
@@ -390,11 +390,11 @@
 					num_control_point = "4";
 					control_point_x_0 = "0";
 					control_point_x_1 = "1024";
-					control_point_x_2 = "20479";
+					control_point_x_2 = "35071";
 					control_point_x_3 = "65535";
 					control_point_y_0 = "0";
 					control_point_y_1 = "1024";
-					control_point_y_2 = "2560";
+					control_point_y_2 = "3152";
 					control_point_y_3 = "4096";
 				};
 
