@@ -20,4 +20,21 @@
 			};
 		};
 	};
+
+	/delete-node/ cam_i2cmux;
+
+	i2c@3180000 {
+		#address-cells = <1>;
+		#size-cells = <0>;
+		cam_port_0@1a {
+			reset-gpios = <&tegra_main_gpio CAM0_PWDN GPIO_ACTIVE_HIGH>;
+
+			clocks = <&tegra_car TEGRA186_CLK_EXTPERIPH1>, <&tegra_car TEGRA186_CLK_PLLP_OUT0>;
+				clock-names = "extperiph1", "pllp_grtba";
+				mclk = "extperiph1";
+				clock-frequency = <37125000>;
+
+			temperature-addr = <0x48>;
+		};
+	};
 };
