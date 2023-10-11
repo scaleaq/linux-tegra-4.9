@@ -143,7 +143,7 @@ static struct v4l2_ctrl_config imx485_custom_ctrl_list[] = {
 		.flags = V4L2_CTRL_FLAG_SLIDER | V4L2_CTRL_FLAG_UPDATE,
 		.def = 0,
 		.min = 0,
-		.max = 0xf4240,
+		.max = 0x5f5e100,
 		.step = 1,
 	},
 };
@@ -709,7 +709,11 @@ static int imx485_set_custom_ctrls(struct v4l2_ctrl *ctrl)
 		err = ops->set_test_pattern(tc_dev, *ctrl->p_new.p_u32);
 		break;
 	case TEGRA_CAMERA_CID_LCG:
-		imx485_write_reg(s_data, FDG_SEL0, *ctrl->p_new.p_u8 ? 1 : 0);
+		err = imx485_write_reg(s_data, FDG_SEL0, *ctrl->p_new.p_u8 ? 1 : 0);
+		if (err) {
+			dev_err(tc_dev->dev, "%s: error writing FDG_SEL0\n", __func__);
+			return err;
+		}
 		break;
 	case TEGRA_CAMERA_CID_SENSOR_TEMPERATURE:
 		// control writing will request the update from sensor
@@ -1570,6 +1574,7 @@ static int imx485_set_mode(struct tegracam_device *tc_dev)
 	struct camera_common_data *s_data = tc_dev->s_data;
 	struct device *dev = tc_dev->dev;
 	int err;
+	struct v4l2_ctrl *ctrl;
 
 	// Reset data rate
 	priv->data_rate = IMX485_1782_MBPS;
@@ -1645,6 +1650,15 @@ static int imx485_set_mode(struct tegracam_device *tc_dev)
 	err = imx485_update_framerate_range(tc_dev);
 	if (err)
 		return err;
+
+	ctrl = fm_find_v4l2_ctrl(tc_dev, TEGRA_CAMERA_CID_LCG);
+	if (ctrl) {
+		err = imx485_write_reg(s_data, FDG_SEL0, *ctrl->p_new.p_u8 ? 1 : 0);
+		if (err) {
+			dev_err(tc_dev->dev, "%s: error writing FDG_SEL0\n", __func__);
+			return err;
+		}
+	}
 
 	dev_dbg(dev, "%s: set mode %u\n", __func__, s_data->mode);
 

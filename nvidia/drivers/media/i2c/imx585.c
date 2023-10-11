@@ -162,7 +162,7 @@ static struct v4l2_ctrl_config imx585_custom_ctrl_list[] = {
 		.flags = V4L2_CTRL_FLAG_SLIDER | V4L2_CTRL_FLAG_UPDATE,
 		.def = 0,
 		.min = 0,
-		.max = 0xf4240,
+		.max = 0x5f5e100,
 		.step = 1,
 	},
 	{
